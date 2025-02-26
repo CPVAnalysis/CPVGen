@@ -23,6 +23,7 @@ class CRABLauncher(object):
       setattr(self,k,v)
 
     # some fixed parameters
+    self.fragment_name = 'BsToPhiPhiTo4K_cfi.py'
     self.nevents_perminiaod = 5
 
     # filter efficiency obtained from private GEN production test_trgmu_v0 with trigger muon filter and without acceptance cuts
@@ -153,7 +154,6 @@ class CRABLauncher(object):
 
 
   def createDriver(self):
-    fragment_name = 'BsToPhiPhiTo4K_cfi.py'
 
     #TODO ok for both 2018 and 2024?
     command = 'cmsDriver.py Configuration/GenProduction/python/fragment.py --fileout file:step1.root --mc --eventcontent FEVTDEBUG --datatier GEN-SIM --conditions {gt} --beamspot Realistic25ns13TeVEarly2018Collision --step GEN,SIM --geometry DB:Extended --era Run2_2018 --python_filename step1.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n {nevts} --mc --customise_commands "from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper; randSvc = RandomNumberServiceHelper(process.RandomNumberGeneratorService); randSvc.populate()"'
@@ -172,7 +172,7 @@ class CRABLauncher(object):
         'WORKDIR=$CMSSW_BASE/src',
         'cd $WORKDIR',
         'mkdir -p Configuration/GenProduction/python/',
-        'cp $STARTDIR/fragments/{frgmt} Configuration/GenProduction/python/fragment.py',
+        'cp $STARTDIR/../fragments/{frgmt} Configuration/GenProduction/python/fragment.py',
         'scram b -j 8',
         '{cmd}',
         '{cmd_rpl}',
@@ -183,7 +183,7 @@ class CRABLauncher(object):
       submitter_tmp = '\n'.join(submitter_tmp)
       submitter_tmp = submitter_tmp.format(
           pl = self.pl,
-          frgmt = fragment_name,
+          frgmt = self.fragment_name,
           cmd = command,
           cmd_rpl = command_replace,
           )
