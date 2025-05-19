@@ -48,6 +48,20 @@ def get_list_daughters(mother, pdgid):
     #return [mother.daughter(jj) for jj in range(mother.numberOfDaughters()) if abs(mother.daughter(jj).pdgId()) == pdgid]
 
 
+def get_decay_chain(part, pdgid_list=[]):
+  ancestors = sorted([part.mother(jj) for jj in range(part.numberOfMothers())], key = lambda x : x.pt(), reverse=True)
+  if len(ancestors) != 0:
+    ancestor = ancestors[0]
+    ancestor_pdgid = ancestor.pdgId()
+    if abs(ancestor_pdgid) in [1, 2, 3, 4, 5, 21, 1103, 2101, 2103, 2203, 3101, 3103, 3201, 3203, 3303, 4101, 4103, 4201, 4203, 4301, 4303, 4403, 5101, 5201, 5203, 5301, 5303, 5401, 5403, 5503]:
+      return pdgid_list
+    else:
+      pdgid_list.append(ancestor_pdgid)
+      return get_decay_chain(ancestor, pdgid_list)
+  else:
+      return []
+
+
 branches = [
     'run',  
     'lumi', 
@@ -110,6 +124,39 @@ branches = [
     'charge_k1k2',
     'charge_k3k4',
     'charge_phi1phi2',
+
+    # unmixed Bs decays
+    'chain_Bs_to_phiphi',
+    'chain_Bsstar_to_Bs_to_phiphi',
+    'chain_Bc_to_Bs_to_phiphi',
+    'chain_Bcstar_to_Bc_to_Bs_to_phiphi',
+    'chain_Bc_to_Bsstar_to_Bs_to_phiphi',
+    'chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_phiphi',
+
+    # mixed Bs decays
+    'chain_Bsbar_to_Bs_to_phiphi',
+    'chain_Bsstarbar_to_Bsbar_to_Bs_to_phiphi',
+    'chain_Bcbar_to_Bsbar_to_Bs_to_phiphi',
+    'chain_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi',
+    'chain_Bcstarbar_to_Bcbar_to_Bsbar_to_Bs_to_phiphi',
+    'chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi',
+
+    # unmixed Bsbar decays
+    'chain_Bsbar_to_phiphi',
+    'chain_Bsstarbar_to_Bsbar_to_phiphi',
+    'chain_Bcbar_to_Bsbar_to_phiphi',
+    'chain_Bcstarbar_to_Bcbar_to_Bsbar_to_phiphi',
+    'chain_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi',
+    'chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi',
+
+    # mixed Bsbar decays
+    'chain_Bs_to_Bsbar_to_phiphi',
+    'chain_Bsstar_to_Bs_to_Bsbar_to_phiphi',
+    'chain_Bc_to_Bs_to_Bsbar_to_phiphi',
+    'chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi',
+    'chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi',
+    'chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi',
+
 
     #TODO add deltaR
 
@@ -204,7 +251,7 @@ def treeProducer(infiles, outdir, outfilename):
 
   count_acceptance = 0
 
-  do_trgmu_study = True
+  do_trgmu_study = False
 
   for i, event in enumerate(events):
     #if float(i)>1000: continue
@@ -296,6 +343,106 @@ def treeProducer(infiles, outdir, outfilename):
       print 'number of Bs mesons with 2 phi daughters: {}'.format(count_Bs_has_two_phi_daughters)
         
     event.the_Bs = the_Bs_mesons[idx_Bs]
+
+    # searching for mother of Bs meson
+    event.the_Bs.mothers = [event.the_Bs.mother(jj) for jj in range(event.the_Bs.numberOfMothers())]
+    the_Bs_mothers = sorted([ii for ii in event.the_Bs.mothers], key = lambda x : x.pt(), reverse=True)
+    event.the_Bs_mother = the_Bs_mothers[0]
+
+    decay_chain = get_decay_chain(event.the_Bs, [])
+
+    # unmixed Bs decays
+    chain_Bs_to_phiphi = 0
+    chain_Bsstar_to_Bs_to_phiphi = 0
+    chain_Bc_to_Bs_to_phiphi = 0
+    chain_Bcstar_to_Bc_to_Bs_to_phiphi = 0
+    chain_Bc_to_Bsstar_to_Bs_to_phiphi = 0
+    chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_phiphi = 0
+
+    # mixed Bs decays
+    chain_Bsbar_to_Bs_to_phiphi = 0
+    chain_Bsstarbar_to_Bsbar_to_Bs_to_phiphi = 0
+    chain_Bcbar_to_Bsbar_to_Bs_to_phiphi = 0
+    chain_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi = 0
+    chain_Bcstarbar_to_Bcbar_to_Bsbar_to_Bs_to_phiphi = 0
+    chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi = 0
+
+    # unmixed Bsbar decays
+    chain_Bsbar_to_phiphi = 0
+    chain_Bsstarbar_to_Bsbar_to_phiphi = 0
+    chain_Bcbar_to_Bsbar_to_phiphi = 0
+    chain_Bcstarbar_to_Bcbar_to_Bsbar_to_phiphi = 0
+    chain_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi = 0
+    chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi = 0
+
+    # mixed Bsbar decays
+    chain_Bs_to_Bsbar_to_phiphi = 0
+    chain_Bsstar_to_Bs_to_Bsbar_to_phiphi = 0
+    chain_Bc_to_Bs_to_Bsbar_to_phiphi = 0
+    chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi = 0
+    chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi = 0
+    chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi = 0
+
+    # Bs decays
+    if event.the_Bs.pdgId() == 531:
+      if decay_chain == []:
+        chain_Bs_to_phiphi = 1
+      elif decay_chain == [533]:
+        chain_Bsstar_to_Bs_to_phiphi = 1
+      elif decay_chain == [541]:
+        chain_Bc_to_Bs_to_phiphi = 1
+      elif decay_chain == [541, 543]:
+        chain_Bcstar_to_Bc_to_Bs_to_phiphi = 1
+      elif decay_chain == [533, 541]:
+        chain_Bc_to_Bsstar_to_Bs_to_phiphi = 1
+      elif decay_chain == [533, 541, 543]:
+        chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_phiphi = 1
+      elif decay_chain == [-531]:
+        chain_Bsbar_to_Bs_to_phiphi = 1
+      elif decay_chain == [-531, -533]:
+        chain_Bsstarbar_to_Bsbar_to_Bs_to_phiphi = 1
+      elif decay_chain == [-531, -541]:
+        chain_Bcbar_to_Bsbar_to_Bs_to_phiphi = 1
+      elif decay_chain == [-531, -533, -541]:
+        chain_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi = 1
+      elif decay_chain == [-531, -541, -543]:
+        chain_Bcstarbar_to_Bcbar_to_Bsbar_to_Bs_to_phiphi = 1
+      elif decay_chain == [-531, -533, -541, -543]:
+        chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi = 1
+      else:
+        print "WARNING: unknown decay chain for Bs: {}".format(decay_chain)
+
+    # Bsbar decays
+    if event.the_Bs.pdgId() == -531:
+      if decay_chain == []:
+        chain_Bsbar_to_phiphi = 1
+      elif decay_chain == [-533]:
+        chain_Bsstarbar_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [-541]:
+        chain_Bcbar_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [-541, -543]:
+        chain_Bcstarbar_to_Bcbar_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [-533, -541]:
+        chain_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [-533, -541, -543]:
+        chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [531]:
+        chain_Bs_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [531, 533]:
+        chain_Bsstar_to_Bs_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [531, 541]:
+        chain_Bc_to_Bs_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [531, 533, 541]:
+        chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [531, 541, 543]:
+        chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi = 1
+      elif decay_chain == [531, 533, 541, 543]:
+        chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi = 1
+      else:
+        print "WARNING: unknown decay chain for Bsbar: {}".format(decay_chain)
+
+
+    # get Bs daughters
     event.the_phi1 = get_list_daughters(mother=event.the_Bs, pdgid=333)[0]
     event.the_phi2 = get_list_daughters(mother=event.the_Bs, pdgid=333)[1]
 
@@ -458,6 +605,39 @@ def treeProducer(infiles, outdir, outfilename):
     tofill['charge_k3k4'] = event.the_k3.charge() + event.the_k4.charge()
     tofill['charge_phi1phi2'] = event.the_phi1.charge() + event.the_phi2.charge()
 
+    # decay chains
+    # unmixed Bs decays
+    tofill['chain_Bs_to_phiphi'] = chain_Bs_to_phiphi
+    tofill['chain_Bsstar_to_Bs_to_phiphi'] = chain_Bsstar_to_Bs_to_phiphi
+    tofill['chain_Bc_to_Bs_to_phiphi'] = chain_Bc_to_Bs_to_phiphi
+    tofill['chain_Bcstar_to_Bc_to_Bs_to_phiphi'] = chain_Bcstar_to_Bc_to_Bs_to_phiphi
+    tofill['chain_Bc_to_Bsstar_to_Bs_to_phiphi'] = chain_Bc_to_Bsstar_to_Bs_to_phiphi
+    tofill['chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_phiphi'] = chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_phiphi
+
+    # mixed Bs decays
+    tofill['chain_Bsbar_to_Bs_to_phiphi'] = chain_Bsbar_to_Bs_to_phiphi
+    tofill['chain_Bsstarbar_to_Bsbar_to_Bs_to_phiphi'] = chain_Bsstarbar_to_Bsbar_to_Bs_to_phiphi
+    tofill['chain_Bcbar_to_Bsbar_to_Bs_to_phiphi'] = chain_Bcbar_to_Bsbar_to_Bs_to_phiphi
+    tofill['chain_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi'] = chain_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi
+    tofill['chain_Bcstarbar_to_Bcbar_to_Bsbar_to_Bs_to_phiphi'] = chain_Bcstarbar_to_Bcbar_to_Bsbar_to_Bs_to_phiphi
+    tofill['chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi'] = chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi
+
+    # unmixed Bsbar decays
+    tofill['chain_Bsbar_to_phiphi'] = chain_Bsbar_to_phiphi
+    tofill['chain_Bsstarbar_to_Bsbar_to_phiphi'] = chain_Bsstarbar_to_Bsbar_to_phiphi
+    tofill['chain_Bcbar_to_Bsbar_to_phiphi'] = chain_Bcbar_to_Bsbar_to_phiphi
+    tofill['chain_Bcstarbar_to_Bcbar_to_Bsbar_to_phiphi'] = chain_Bcstarbar_to_Bcbar_to_Bsbar_to_phiphi
+    tofill['chain_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi'] = chain_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi
+    tofill['chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi'] = chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi
+
+    # mixed Bsbar decays
+    tofill['chain_Bs_to_Bsbar_to_phiphi'] = chain_Bs_to_Bsbar_to_phiphi
+    tofill['chain_Bsstar_to_Bs_to_Bsbar_to_phiphi'] = chain_Bsstar_to_Bs_to_Bsbar_to_phiphi
+    tofill['chain_Bc_to_Bs_to_Bsbar_to_phiphi'] = chain_Bc_to_Bs_to_Bsbar_to_phiphi
+    tofill['chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi'] = chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi
+    tofill['chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi'] = chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi
+    tofill['chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi'] = chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi
+
     #TODO add dxy?   
     #tofill['mu_fromB_dxy'     ] = get_dxy(event.the_pl)
     
@@ -482,7 +662,8 @@ def treeProducer(infiles, outdir, outfilename):
 
 if __name__ == "__main__":
   #version_label = 'test_v0'
-  version_label = 'crab_102X_crab_v0'
+  #version_label = 'crab_102X_crab_v0'
+  version_label = '102X_crab_trgmu_filter'
   #version_label = 'test_trgmu_v0'
   #user = 'anlyon'
   #lepton = 'all'
@@ -494,11 +675,14 @@ if __name__ == "__main__":
   #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/{}/CPVGen/{}'.format(user, version_label)
   #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_v0/BsToPhiPhiTo4K/crab_102X_crab_v0_BsToPhiPhiTo4K_20250130_141241/250130_131709/0000'
 
-  indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_v0/BsToPhiPhiTo4K/crab_102X_crab_v0_BsToPhiPhiTo4K_20250130_141241/250130_131709/0000'
+  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_v0/BsToPhiPhiTo4K/crab_102X_crab_v0_BsToPhiPhiTo4K_20250130_141241/250130_131709/0000'
   #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_v0/BsToPhiPhiTo4K/crab_102X_crab_v0_BsToPhiPhiTo4K_20250203_151733/250203_141746/0000'
   #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/test_trgmu_v0'
  
   #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_trgmu_filter/BsToPhiPhiTo4K/crab_102X_crab_trgmu_filter_BsToPhiPhiTo4K_20250212_225911/250212_215924/*'
+
+
+  indirectory = '/eos/user/a/anlyon/CPVGen/102X_crab_trgmu_filter/BsToPhiPhiTo4K/crab_102X_crab_trgmu_filter_BsToPhiPhiTo4K_20250212_225911/250212_215924/000*/'
 
   # get all the subdirectories (signal points)
   #pointdirs = [f for f in glob.glob('{}/*'.format(indirectory))]
