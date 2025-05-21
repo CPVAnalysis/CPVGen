@@ -141,6 +141,7 @@ branches = [
     'chain_Bcstarbar_to_Bcbar_to_Bsbar_to_Bs_to_phiphi',
     'chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi',
 
+
     # unmixed Bsbar decays
     'chain_Bsbar_to_phiphi',
     'chain_Bsstarbar_to_Bsbar_to_phiphi',
@@ -157,6 +158,22 @@ branches = [
     'chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi',
     'chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi',
 
+    'is_Bs_unmixed',
+    'is_Bs_mixed',
+    'is_Bsbar_unmixed',
+    'is_Bsbar_mixed',
+    'is_unmixed',
+    'is_mixed',
+
+    # lifetime-related quantities
+    'Lxy',
+    'Lxyz',
+    'Bs_beta',
+    'Bs_gamma',
+    'Bs_ct_3D_cm',
+    'Bs_ct_2D_cm',
+    'Bs_ct_3D_ps',
+    'Bs_ct_2D_ps',
 
     #TODO add deltaR
 
@@ -254,7 +271,7 @@ def treeProducer(infiles, outdir, outfilename):
   do_trgmu_study = False
 
   for i, event in enumerate(events):
-    #if float(i)>1000: continue
+    #if float(i)>1000: break
     #print '\n\n Event {}'.format(i)
 
     # access the handles
@@ -344,11 +361,7 @@ def treeProducer(infiles, outdir, outfilename):
         
     event.the_Bs = the_Bs_mesons[idx_Bs]
 
-    # searching for mother of Bs meson
-    event.the_Bs.mothers = [event.the_Bs.mother(jj) for jj in range(event.the_Bs.numberOfMothers())]
-    the_Bs_mothers = sorted([ii for ii in event.the_Bs.mothers], key = lambda x : x.pt(), reverse=True)
-    event.the_Bs_mother = the_Bs_mothers[0]
-
+    # study decay channel
     decay_chain = get_decay_chain(event.the_Bs, [])
 
     # unmixed Bs decays
@@ -441,6 +454,31 @@ def treeProducer(infiles, outdir, outfilename):
       else:
         print "WARNING: unknown decay chain for Bsbar: {}".format(decay_chain)
 
+    is_Bs_unmixed = 0
+    is_Bs_mixed = 0
+    is_Bsbar_unmixed = 0
+    is_Bsbar_mixed = 0
+    is_unmixed = 0
+    is_mixed = 0
+
+    if chain_Bs_to_phiphi or chain_Bsstar_to_Bs_to_phiphi or chain_Bc_to_Bs_to_phiphi or chain_Bcstar_to_Bc_to_Bs_to_phiphi or chain_Bc_to_Bsstar_to_Bs_to_phiphi or chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_phiphi:
+      is_Bs_unmixed = 1
+    elif chain_Bsbar_to_Bs_to_phiphi or chain_Bsstarbar_to_Bsbar_to_Bs_to_phiphi or chain_Bcbar_to_Bsbar_to_Bs_to_phiphi or chain_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi or chain_Bcstarbar_to_Bcbar_to_Bsbar_to_Bs_to_phiphi or chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi:
+      is_Bs_mixed = 1
+    elif chain_Bsbar_to_phiphi or chain_Bsstarbar_to_Bsbar_to_phiphi or chain_Bcbar_to_Bsbar_to_phiphi or chain_Bcstarbar_to_Bcbar_to_Bsbar_to_phiphi or chain_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi or chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_phiphi:
+      is_Bsbar_unmixed = 1
+    elif chain_Bs_to_Bsbar_to_phiphi or chain_Bsstar_to_Bs_to_Bsbar_to_phiphi or chain_Bc_to_Bs_to_Bsbar_to_phiphi or chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi or chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi or chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi:
+      is_Bsbar_mixed = 1
+    else:
+      print 'WARNING - unknown decay chain'
+
+    if is_Bs_unmixed + is_Bs_mixed + is_Bsbar_unmixed + is_Bsbar_mixed != 1:
+      print 'WARNING - Faulty logic - Please check' 
+
+    if is_Bs_unmixed or is_Bsbar_unmixed:
+      is_unmixed = 1
+    elif is_Bs_mixed or is_Bsbar_mixed:
+      is_mixed = 1
 
     # get Bs daughters
     event.the_phi1 = get_list_daughters(mother=event.the_Bs, pdgid=333)[0]
@@ -488,6 +526,61 @@ def treeProducer(infiles, outdir, outfilename):
     #if(event.the_k1.pt() > 0.7 and abs(event.the_k1.eta()) < 2.4 and event.the_k2.pt() > 0.7 and abs(event.the_k2.eta()) < 2.4 and event.the_k3.pt() > 0.7 and abs(event.the_k3.eta()) < 2.4 and event.the_k4.pt() > 0.7 and abs(event.the_k4.eta()) < 2.4):
       count_acceptance += 1
 
+    # enforce acceptance cuts
+    if event.the_k1.pt() < 0.5 or abs(event.the_k1.eta()) > 2.5: continue
+    if event.the_k2.pt() < 0.5 or abs(event.the_k2.eta()) > 2.5: continue
+    if event.the_k3.pt() < 0.5 or abs(event.the_k3.eta()) > 2.5: continue
+    if event.the_k4.pt() < 0.5 or abs(event.the_k4.eta()) > 2.5: continue
+    
+    # compute Bs ct
+    # searching for mother of Bs meson
+    event.the_Bs.mothers = [event.the_Bs.mother(jj) for jj in range(event.the_Bs.numberOfMothers())]
+    the_Bs_mothers = sorted([ii for ii in event.the_Bs.mothers], key = lambda x : x.pt(), reverse=True)
+    event.the_Bs_mother = the_Bs_mothers[0]
+
+    # define PV as Bs mother vertex
+    ## used Bs mother vertex as Bs vertex is the same as phi vertex for mixed
+    ## for unmixed, Bs mother vertex same as Bs vertex
+    pv_x = event.the_Bs_mother.vx()
+    pv_y = event.the_Bs_mother.vy()
+    pv_z = event.the_Bs_mother.vz()
+
+    # define SV as phi vertex
+    sv_x = event.the_phi1.vx()
+    sv_y = event.the_phi1.vy()
+    sv_z = event.the_phi1.vz()
+
+    # check phi1 and phi2 originate from same vertex
+    #diff_vx = abs(event.the_phi1.vx() - event.the_phi2.vx()) / event.the_phi1.vx()
+    #diff_vy = abs(event.the_phi1.vy() - event.the_phi2.vy()) / event.the_phi1.vy()
+    #diff_vz = abs(event.the_phi1.vz() - event.the_phi2.vz()) / event.the_phi1.vz()
+
+    event.Lxy  = np.sqrt((pv_x-sv_x)**2 + (pv_y - sv_y)**2) # in cm
+    event.Lxyz  = np.sqrt((pv_x-sv_x)**2 + (pv_y - sv_y)**2 + (pv_z - sv_z)**2) # in cm
+
+    event.the_Bs.beta  = event.the_Bs.p4().Beta()
+    event.the_Bs.gamma = event.the_Bs.p4().Gamma()
+
+    event.the_Bs.ct_3D_cm = event.Lxyz / (event.the_Bs.beta * event.the_Bs.gamma)
+
+    # compute ct using information in the transverse plane
+    Lx = sv_x - pv_x
+    Ly = sv_y - pv_y
+    Lz = sv_z - pv_z
+    px = event.the_Bs.p4().px()
+    py = event.the_Bs.p4().py()
+    pz = event.the_Bs.p4().pz()
+    mass = event.the_Bs.p4().mass()
+
+    event.the_Bs.ct_2D_cm = mass * (Lx * px + Ly * py) / (px * px + py * py)
+
+    # convert ct from cm to ps
+    const_speed_of_light = 299792458 # m/s
+    const_cm_to_m = 1e-2 
+    const_s_to_ps = 1e12
+
+    event.the_Bs.ct_3D_ps = event.the_Bs.ct_3D_cm * const_cm_to_m * const_s_to_ps / const_speed_of_light
+    event.the_Bs.ct_2D_ps = event.the_Bs.ct_2D_cm * const_cm_to_m * const_s_to_ps / const_speed_of_light
 
     #TODO search for triggering muon on the other side?
     #  if event.the_hn.lep.pt() > 6.8 and abs(event.the_hn.lep.eta()) < 1.55: event.the_hn.lep.satisfies_BParkHLT_cond = 1
@@ -637,6 +730,23 @@ def treeProducer(infiles, outdir, outfilename):
     tofill['chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi'] = chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi
     tofill['chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi'] = chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi
     tofill['chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi'] = chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi
+
+    tofill['is_Bs_unmixed'] = is_Bs_unmixed     
+    tofill['is_Bs_mixed'] = is_Bs_mixed     
+    tofill['is_Bsbar_unmixed'] = is_Bsbar_unmixed     
+    tofill['is_Bsbar_mixed'] = is_Bsbar_mixed     
+    tofill['is_unmixed'] = is_unmixed     
+    tofill['is_mixed'] = is_mixed     
+
+    # lifetime-related quantities
+    tofill['Lxy'] = event.Lxy
+    tofill['Lxyz'] = event.Lxyz
+    tofill['Bs_beta'] = event.the_Bs.beta
+    tofill['Bs_gamma'] = event.the_Bs.gamma
+    tofill['Bs_ct_2D_cm'] = event.the_Bs.ct_2D_cm
+    tofill['Bs_ct_3D_cm'] = event.the_Bs.ct_3D_cm
+    tofill['Bs_ct_2D_ps'] = event.the_Bs.ct_2D_ps
+    tofill['Bs_ct_3D_ps'] = event.the_Bs.ct_3D_ps
 
     #TODO add dxy?   
     #tofill['mu_fromB_dxy'     ] = get_dxy(event.the_pl)
