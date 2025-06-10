@@ -10,6 +10,7 @@ def getOptions():
 
   parser.add_argument('--pl'        , type=str, dest='pl'         , help='production label'                 ,                      default='V00_v00')
   parser.add_argument('--nevents'   , type=str, dest='nevents'    , help='requested events (analysis level)',                      default='20000')
+  parser.add_argument('--dogenonly' ,           dest='dogenonly'  , help='run GEN step only'                , action='store_true', default=False)
   parser.add_argument('--dosubmit'  ,           dest='dosubmit'   , help='submit to CRAB'                   , action='store_true', default=False)
   parser.add_argument('--doresubmit',           dest='doresubmit' , help='resubmit to CRAB'                 , action='store_true', default=False)
 
@@ -52,8 +53,13 @@ class CRABLauncher(object):
     
 
   def createCRABConfig(self):
-    self.nevents_togenerate = float(self.nevents) / (float(self.eff_filter) * float(self.eff_nanoaod))
+    if not self.dogenonly:
+      self.nevents_togenerate = float(self.nevents) / (float(self.eff_filter) * float(self.eff_nanoaod))
+    else:
+      self.nevents_togenerate = float(self.nevents) / float(self.eff_filter)
+
     self.nevents_perjob = int(self.nevents_perminiaod / float(self.eff_filter))
+
     if self.nevents_togenerate > self.nevents_perjob:
       self.njobs = int(self.nevents_togenerate / self.nevents_perjob)
     else:
@@ -75,7 +81,7 @@ class CRABLauncher(object):
       'config.JobType.pluginName = "PrivateMC"',
       'config.JobType.psetName = "step1.py"',
       '{inputfiles}',
-      'config.JobType.outputFiles = ["step1.root", "step4.root"]',
+      'config.JobType.outputFiles = {outputfiles}',
       'config.JobType.scriptExe = "submitter.sh"',
       'config.JobType.disableAutomaticOutputCollection = True',
       'ncores = 1',
@@ -93,12 +99,13 @@ class CRABLauncher(object):
       'config.Data.splitting = "EventBased"',
       'config.Data.ignoreLocality = False',
       '',
-      'config.Site.storageSite = "T3_CH_PSI"',
+      'config.Site.storageSite = "T3_CH_CERNBOX"',
       ]
 
     config = '\n'.join(config)
     config = config.format(
-        inputfiles = 'config.JobType.inputFiles = ["../../data/FrameworkJobReport.xml", "step1.py", "../../cmsDrivers/step2.py", "../../data/pileup_2018.root", "../../cmsDrivers/step3.py", "../../cmsDrivers/step4.py"]',
+        inputfiles = 'config.JobType.inputFiles = ["../../data/FrameworkJobReport.xml", "step1.py", "../../cmsDrivers/step2.py", "../../data/pileup_2018.root", "../../cmsDrivers/step3.py", "../../cmsDrivers/step4.py"]' if not self.dogenonly else 'config.JobType.inputFiles = ["../../data/FrameworkJobReport.xml", "step1.py"]',
+        outputfiles = '["step1.root", "step4.root"]' if not self.dogenonly else '["step1.root"]',
         pl = self.pl,
         time = 30000, # in minutes
         nevtsjob = self.nevents_perjob,
@@ -112,35 +119,51 @@ class CRABLauncher(object):
 
 
   def createSubmitter(self):
-    submitter = [
-      '#!/bin/bash',
-      'echo " "',
-      'echo "content of /srv/{cmssw}/src"',
-      'ls -al /srv/{cmssw}/src',
-      'echo " "',
-      'echo "will run step1"',
-      'cmsRun -j step1.log step1.py',
-      'echo "end run step1"',
-      'echo "content of dir"',
-      'ls -al',
-      'echo " "',
-      'echo "will run step2"',
-      'cmsRun -j step2.log step2.py',
-      'echo "end run step2"',
-      'echo "content of dir"',
-      'ls -al',
-      'echo " "',
-      'echo "will run step3"',
-      'cmsRun -j step3.log step3.py',
-      'echo "end run step3"',
-      'echo "content of dir"',
-      'ls -al',
-      'echo " "',
-      'echo "will run step4"',
-      'cmsRun -e -j FrameworkJobReport.xml step4.py',
-      'echo "end run step4"',
-      'echo "Done"',
-      ]
+    if not self.dogenonly:
+      submitter = [
+        '#!/bin/bash',
+        'echo " "',
+        'echo "content of /srv/{cmssw}/src"',
+        'ls -al /srv/{cmssw}/src',
+        'echo " "',
+        'echo "will run step1"',
+        'cmsRun -j step1.log step1.py',
+        'echo "end run step1"',
+        'echo "content of dir"',
+        'ls -al',
+        'echo " "',
+        'echo "will run step2"',
+        'cmsRun -j step2.log step2.py',
+        'echo "end run step2"',
+        'echo "content of dir"',
+        'ls -al',
+        'echo " "',
+        'echo "will run step3"',
+        'cmsRun -j step3.log step3.py',
+        'echo "end run step3"',
+        'echo "content of dir"',
+        'ls -al',
+        'echo " "',
+        'echo "will run step4"',
+        'cmsRun -e -j FrameworkJobReport.xml step4.py',
+        'echo "end run step4"',
+        'echo "Done"',
+        ]
+    else:
+      submitter = [
+        '#!/bin/bash',
+        'echo " "',
+        'echo "content of /srv/{cmssw}/src"',
+        'ls -al /srv/{cmssw}/src',
+        'echo " "',
+        'echo "will run step1"',
+        'cmsRun -j step1.log step1.py',
+        'echo "end run step1"',
+        'echo "content of dir"',
+        'ls -al',
+        'echo " "',
+        'echo "Done"',
+        ]
 
     submitter = '\n'.join(submitter)
     submitter = submitter.format(
@@ -156,7 +179,10 @@ class CRABLauncher(object):
   def createDriver(self):
 
     #TODO ok for both 2018 and 2024?
-    command = 'cmsDriver.py Configuration/GenProduction/python/fragment.py --fileout file:step1.root --mc --eventcontent FEVTDEBUG --datatier GEN-SIM --conditions {gt} --beamspot Realistic25ns13TeVEarly2018Collision --step GEN,SIM --geometry DB:Extended --era Run2_2018 --python_filename step1.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n {nevts} --mc --customise_commands "from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper; randSvc = RandomNumberServiceHelper(process.RandomNumberGeneratorService); randSvc.populate()"'
+    if not self.dogenonly:
+      command = 'cmsDriver.py Configuration/GenProduction/python/fragment.py --fileout file:step1.root --mc --eventcontent FEVTDEBUG --datatier GEN-SIM --conditions {gt} --beamspot Realistic25ns13TeVEarly2018Collision --step GEN,SIM --geometry DB:Extended --era Run2_2018 --python_filename step1.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n {nevts} --mc --customise_commands "from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper; randSvc = RandomNumberServiceHelper(process.RandomNumberGeneratorService); randSvc.populate()"'
+    else:
+      command = 'cmsDriver.py Configuration/GenProduction/python/fragment.py --fileout file:step1.root --mc --eventcontent FEVTDEBUG --datatier GEN --conditions {gt} --beamspot Realistic25ns13TeVEarly2018Collision --step GEN --geometry DB:Extended --era Run2_2018 --python_filename step1.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n {nevts} --mc --customise_commands "from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper; randSvc = RandomNumberServiceHelper(process.RandomNumberGeneratorService); randSvc.populate()"'
 
     command = command.format(
           gt = self.GT,
