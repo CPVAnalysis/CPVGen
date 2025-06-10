@@ -14,14 +14,37 @@ generator = cms.EDFilter(
             particle_property_file = cms.FileInPath('GeneratorInterface/EvtGenInterface/data/evt_2014.pdl'),
             #particle_property_file = cms.FileInPath('GeneratorInterface/EvtGenInterface/data/evt_2020.pdl'), # available with 10_6_X
             user_decay_embedded= cms.vstring(
-                # PVV_CPLH beta eta |G1+| argG1+ |G0+| argG0+ |G1-| argG1- 
-                # beta: CKM angle 
-                'Define Hp 0.49',
-                'Define Hz 0.775',
-                'Define Hm 0.4',
-                'Define pHp 2.50',
+                # The following relationshop must hold: 
+                # HpHp + HzHz + HmHm = 1
+                #
+                # Latest values taken from PDG2024
+                #   Amplitudes
+                #     GammaL / Gamma = |A0|^2 = 0.379
+                #     Gamma_perp / Gamma = |A_perp|^2 = 0.310
+                #     Gamma_par = |A_par|^2 = 1 - GammaL - Gamma_perp = 0.311
+                #     
+                #     Definition: the amplitudes correspond to the transversity amplitudes rather than the helicity 
+                #                 i.e. Hp = A_par, Hz = A0, Hm = A_perp
+                #
+                #                 Hp = sqrt(0.311) = 0.558
+                #                 Hz = sqrt(0.379) = 0.616
+                #                 Hm = sqrt(0.310) = 0.557
+                #
+                #   Phases
+                #     phi_par = delta_par - delta0 = 2.469  
+                #     phi_perp = delta_perp - delta0 = 2.75
+                #
+                #     Definition: pHp = delta_par, pHz = delta0, pHm = delta_perp
+                #                 By convention, delta0 = 0
+                #                 pHp = 2.469
+                #                 pHz = 0.0
+                #                 pHp = 2.75
+                'Define Hp 0.558',
+                'Define Hz 0.616',
+                'Define Hm 0.557',
+                'Define pHp 2.469',
                 'Define pHz 0.0',
-                'Define pHm -0.17',
+                'Define pHm 2.75',
                 '',
                 'Alias      MyB_s0   B_s0',
                 'Alias      Myanti-B_s0   anti-B_s0',
