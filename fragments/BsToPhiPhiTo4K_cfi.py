@@ -97,16 +97,6 @@ BFilter = cms.EDFilter(
     ParticleID = cms.untracked.int32(531)
 )
 
-# ask for the presence of a triggering muon in the event
-#TODO enforce that this muon comes from the other B meson?
-TriggerMuonFilter = cms.EDFilter("PythiaFilterMultiMother", 
-    MaxEta = cms.untracked.double(1.55),
-    MinEta = cms.untracked.double(-1.55),
-    MinPt = cms.untracked.double(6.8), 
-    ParticleID = cms.untracked.int32(13),
-    MotherIDs = cms.untracked.vint32(511, 521, 531, 5122, 5112, 5212, 5222, 5132, 5232, 5332), # B mesons and B baryons
-)
-
 BsDecayFilter = cms.EDFilter(
     "PythiaDauVFilter",
     verbose         = cms.untracked.int32(1),
@@ -118,16 +108,23 @@ BsDecayFilter = cms.EDFilter(
     MaxEta          = cms.untracked.vdouble(10.0,  10.0)   # no filter for now
 )
 
-PhiDecayFilter = cms.EDFilter( #FIXME does not seem to be applied on both phi candidates
-    "PythiaDauVFilter",
-    verbose = cms.untracked.int32(0),
-    NumberDaughters = cms.untracked.int32(2),
-    MotherID = cms.untracked.int32(531),
-    ParticleID = cms.untracked.int32(333),
-    DaughterIDs = cms.untracked.vint32(321, -321), # kaons
-    MinPt = cms.untracked.vdouble(0.5, 0.5), 
-    MinEta = cms.untracked.vdouble(-2.5, -2.5),
-    MaxEta = cms.untracked.vdouble(2.5, 2.5)
+PhiDecayFilter = cms.EDFilter(
+    "MCMultiParticleFilter",
+    ParticleID = cms.vint32(321),
+    MotherID = cms.untracked.vint32(333),
+    EtaMax = cms.vdouble(2.5),
+    PtMin = cms.vdouble(0.3), # keep the threshold low
+    Status = cms.vint32(0),
+    NumRequired = cms.int32(4),
+    AcceptMore = cms.bool(True)
 )
 
-ProductionFilterSequence = cms.Sequence(generator*BFilter*BsDecayFilter*PhiDecayFilter*TriggerMuonFilter)
+TriggerMuonFilter = cms.EDFilter(
+    "PythiaFilter",
+    MaxEta = cms.untracked.double(1.55),
+    MinEta = cms.untracked.double(-1.55),
+    MinPt = cms.untracked.double(6.8),
+    ParticleID = cms.untracked.int32(13)
+)
+
+ProductionFilterSequence = cms.Sequence(generator * BFilter * BsDecayFilter * PhiDecayFilter * TriggerMuonFilter)
