@@ -28,11 +28,19 @@ class CRABLauncher(object):
     self.nevents_perminiaod = 5
 
     # filter efficiency obtained from private GEN production test_trgmu_v0 with trigger muon filter and without acceptance cuts
-    eff = 1.86e-4 
+    #eff = 1.86e-4 
+
+    # obtained with test_fragment_v2 (no cond on trgmu mother + kaon pt > 0.5 GeV)
+    eff = 0.00012451599
+
     # acceptance of kaons (pt > 0.5 GeV |eta| < 2.5) otained with test_trgmu_v0
-    acc = 0.54
+    #acc = 0.54 
+
+    # acceptance of kaons (pt > 0.5 GeV |eta| < 2.5) otained with test_fragment_v2
+    acc = 0.97 
+
     self.eff_filter = eff * acc
-    self.eff_nanoaod = 0.3
+    self.eff_nanoaod = 0.3 #FIXME too low?
 
     #self.CMSSW = 'CMSSW_10_6_37/'
     #self.GT = '106X_upgrade2018_realistic_v11_L1v1'
