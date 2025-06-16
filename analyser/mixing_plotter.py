@@ -218,16 +218,102 @@ def plot_mixing_channels(version_label):
   print '--> myPlots/mixing/{}/channels_mixing.png created'.format(version_label)
 
 
+def plot_trgmu_mother(version_label):
+  print '----------------------'
+  print 'Will plot trigger muon mother for ntuples {}'.format(version_label)
+  print '----------------------'
+
+  trgmu_mother_pdgid = Quantity('fabs(trgmu_mother_pdgid)', 'trgmu_mother_pdgid', 'trgmu_mother_pdgid', 1000000, 0, 1000000)
+  #[511, 521, 443, 411, 431, 15, 531, 13, 421, 5122, 5332, 553, 5132, 5232, 223, 4122, 541, 100443, 4132, 22, 4232, 221]
+  # B mesons
+  # 511: B0
+  # 521: B+
+  # 531: Bs
+  # 541: Bc
+
+  # B baryons
+  # 5122: Lambda_b
+  # 5332: Omega_b
+  # 5132: Xi_b-
+  # 5232: Xi_b0
+
+  # bbbar meson
+  # 553: Upsilon(1S)
+
+  # D mesons
+  # 411: D+
+  # 431: Ds+
+  # 421: D0
+
+  # D baryons
+  # 4122: Lambda_c
+  # 4132: Lambda_c0
+  # 4232: Lambda_c+
+
+  # ccbar mesons charmonium
+  # 443: J/psi
+  # 100443: psi(2S)
+
+  # light flavoured mesons
+  # 223: omega(782)
+  # 221: eta
+
+  # other
+  # 22: gamma
+  # 13: mu
+  
+  filename = './outputfiles/{}/genTree.root'.format(version_label)
+
+  f = ROOT.TFile.Open(filename, 'READ')
+  tree = f.Get('tree')
+
+  trgmu_mother_species = {}
+
+  hist_name = 'hist_trgmu_mother_pdgid'
+  hist = ROOT.TH1D(hist_name, hist_name, trgmu_mother_pdgid.nbins, trgmu_mother_pdgid.bin_min, trgmu_mother_pdgid.bin_max)
+  tree.Project(hist_name, 'fabs(trgmu_mother_pdgid)', '')
+  hist.SetDirectory(0)
+
+  is_B_meson = (hist.GetBinContent(hist.GetXaxis().FindBin(511)) + hist.GetBinContent(hist.GetXaxis().FindBin(521)) + hist.GetBinContent(hist.GetXaxis().FindBin(531)) + hist.GetBinContent(hist.GetXaxis().FindBin(541))) / hist.GetEntries()
+  is_B_baryon = (hist.GetBinContent(hist.GetXaxis().FindBin(5122)) + hist.GetBinContent(hist.GetXaxis().FindBin(5332)) + hist.GetBinContent(hist.GetXaxis().FindBin(5132)) + hist.GetBinContent(hist.GetXaxis().FindBin(5232))) / hist.GetEntries()
+  is_bbbar_meson = (hist.GetBinContent(hist.GetXaxis().FindBin(552))) / hist.GetEntries()
+  is_D_meson = (hist.GetBinContent(hist.GetXaxis().FindBin(411)) + hist.GetBinContent(hist.GetXaxis().FindBin(431)) + hist.GetBinContent(hist.GetXaxis().FindBin(421))) / hist.GetEntries()
+  is_D_baryon = (hist.GetBinContent(hist.GetXaxis().FindBin(4122)) + hist.GetBinContent(hist.GetXaxis().FindBin(4132)) + hist.GetBinContent(hist.GetXaxis().FindBin(4232))) / hist.GetEntries()
+  is_ccbar_meson = (hist.GetBinContent(hist.GetXaxis().FindBin(443)) + hist.GetBinContent(hist.GetXaxis().FindBin(100443))) / hist.GetEntries()
+  is_light_meson = (hist.GetBinContent(hist.GetXaxis().FindBin(223)) + hist.GetBinContent(hist.GetXaxis().FindBin(221))) / hist.GetEntries()
+  is_other = 1 - (is_B_meson + is_B_baryon + is_bbbar_meson + is_D_meson + is_D_baryon + is_ccbar_meson + is_light_meson)
+
+  trgmu_mother_species[''] = [is_B_meson, is_B_baryon, is_bbbar_meson, is_D_meson, is_D_baryon, is_ccbar_meson, is_light_meson, is_other]
+
+  # plot the rates
+  the_df = pd.DataFrame(trgmu_mother_species, index=['B mesons', 'B baryons', r'$b\overline{b}$ mesons', 'D mesons', 'D baryons', r'$c\overline{c}$ mesons', 'Light flavoured mesons', 'Other'])
+  the_df = the_df.transpose()
+
+  ax = the_df.plot.barh(stacked=True, colormap='Paired', figsize=(10, 7))#'Set3')#'Pastel1')#'OrRd')#,colormap='PiYG')
+  lgd = ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+  ax.set_title(r'Trigger muon mother')
+  ax.set_xlim(0, 1)
+  ax.margins(y=0)
+  ax.set_ylim(-0.3, 0.3)
+
+  ax.figure.savefig('myPlots/mixing/{}/trgmu_mother_species.png'.format(version_label),bbox_extra_artists=(lgd,), bbox_inches='tight')
+  ax.figure.savefig('myPlots/mixing/{}/trgmu_mother_species.pdf'.format(version_label),bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+  print '--> myPlots/mixing/{}/trgmu_mother_species.png created'.format(version_label)
+
+
 
 if __name__ == "__main__":
 
   #version_label = '102X_crab_trgmu_filter'
-  version_label = 'test_filter_phi_v2' 
+  #version_label = 'test_filter_phi_v2' 
+  version_label = 'test_fragment_v2' 
 
   outdirname = './myPlots/mixing/{}'.format(version_label)
   if not path.exists(outdirname):
     os.system('mkdir -p {}'.format(outdirname))
 
-  plot_decay_channels(version_label=version_label, isBs=True)
-  plot_decay_channels(version_label=version_label, isBs=False)
-  plot_mixing_channels(version_label=version_label)
+  #plot_decay_channels(version_label=version_label, isBs=True)
+  #plot_decay_channels(version_label=version_label, isBs=False)
+  #plot_mixing_channels(version_label=version_label)
+  plot_trgmu_mother(version_label=version_label)
