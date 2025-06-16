@@ -175,6 +175,9 @@ branches = [
     'Bs_ct_3D_ps',
     'Bs_ct_2D_ps',
 
+    # trigger muon info
+    'trgmu_mother_pdgid',
+
     #TODO add deltaR
 
 ]
@@ -268,7 +271,7 @@ def treeProducer(infiles, outdir, outfilename):
 
   count_acceptance = 0
 
-  do_trgmu_study = False
+  do_trgmu_study = True
 
   for i, event in enumerate(events):
     #if float(i)>1000: break
@@ -286,6 +289,7 @@ def treeProducer(infiles, outdir, outfilename):
     count_tot += 1
 
     # searching for trigger muon
+    the_trgmu_mother_pdgid = -99
     if do_trgmu_study:
       muons = [ip for ip in event.genP if (abs(ip.pdgId())==13 and ip.pt()>6.8 and abs(ip.eta())<1.55)]
       the_muons = sorted([ii for ii in muons], key = lambda x : x.pt(), reverse=True)
@@ -293,9 +297,10 @@ def treeProducer(infiles, outdir, outfilename):
         count_mu_trg += 1
         #print 'number of triggering muon: {}'.format(len(the_muons))
         for the_muon in the_muons:
+         #print 'trigger muon: {}'.format(the_muon.pdgId())
          mu_mothers = [the_muon.mother(jj) for jj in range(the_muon.numberOfMothers())]
          the_mu_mothers = sorted([ii for ii in mu_mothers], key = lambda x : x.pt(), reverse=True)
-         #print 'the mothers are:'
+         ##print 'the mothers are:'
          for the_mu_mother in the_mu_mothers:
            #print the_mu_mother.pdgId()
            if abs(the_mu_mother.pdgId()) in [511, 521, 531]:
@@ -306,8 +311,11 @@ def treeProducer(infiles, outdir, outfilename):
              count_other += 1 
              print 'other mother pdgid: {}'.format(abs(the_mu_mother.pdgId()))
 
+           the_trgmu_mother_pdgid = the_mu_mother.pdgId()
+
            if abs(the_mu_mother.pdgId()) not in list_mu_mother_pdgid:
              list_mu_mother_pdgid.append(abs(the_mu_mother.pdgId()))
+              
 
            #mu_grandmothers = [the_mu_mother.mother(jj) for jj in range(the_mu_mother.numberOfMothers())]
            #the_mu_grandmothers = sorted([ii for ii in mu_grandmothers], key = lambda x : x.pt(), reverse=True)
@@ -526,11 +534,36 @@ def treeProducer(infiles, outdir, outfilename):
     #if(event.the_k1.pt() > 0.7 and abs(event.the_k1.eta()) < 2.4 and event.the_k2.pt() > 0.7 and abs(event.the_k2.eta()) < 2.4 and event.the_k3.pt() > 0.7 and abs(event.the_k3.eta()) < 2.4 and event.the_k4.pt() > 0.7 and abs(event.the_k4.eta()) < 2.4):
       count_acceptance += 1
 
+    #if event.the_k1.pt() < 0.5 or abs(event.the_k1.eta()) > 2.5:
+    #  print 'k1 {} {} not passing acceptance cuts'.format(event.the_k1.pt(), event.the_k1.eta())
+    #  print event.the_phi1.pdgId()
+    #  print event.the_k1.pdgId()
+    #  #print decay_chain
+    #  #print 'is mixed {}'.format(is_Bs_mixed)
+    #if event.the_k2.pt() < 0.5 or abs(event.the_k2.eta()) > 2.5:
+    #  print 'k2 {} {} not passing acceptance cuts'.format(event.the_k2.pt(), event.the_k2.eta())
+    #  print event.the_phi1.pdgId()
+    #  print event.the_k2.pdgId()
+    #  #print decay_chain
+    #  #print 'is mixed {}'.format(is_Bs_mixed)
+    #if event.the_k3.pt() < 0.5 or abs(event.the_k3.eta()) > 2.5:
+    #  print 'k3 {} {} not passing acceptance cuts'.format(event.the_k3.pt(), event.the_k3.eta())
+    #  print event.the_phi2.pdgId()
+    #  print event.the_k3.pdgId()
+    #  #print decay_chain
+    #  #print 'is mixed {}'.format(is_Bs_mixed)
+    #if event.the_k4.pt() < 0.5 or abs(event.the_k4.eta()) > 2.5:
+    #  print 'k4 {} {} not passing acceptance cuts'.format(event.the_k4.pt(), event.the_k4.eta())
+    #  print event.the_phi2.pdgId()
+    #  print event.the_k4.pdgId()
+    #  #print decay_chain
+    #  #print 'is mixed {}'.format(is_Bs_mixed)
+
     # enforce acceptance cuts
-    if event.the_k1.pt() < 0.5 or abs(event.the_k1.eta()) > 2.5: continue
-    if event.the_k2.pt() < 0.5 or abs(event.the_k2.eta()) > 2.5: continue
-    if event.the_k3.pt() < 0.5 or abs(event.the_k3.eta()) > 2.5: continue
-    if event.the_k4.pt() < 0.5 or abs(event.the_k4.eta()) > 2.5: continue
+    #if event.the_k1.pt() < 0.5 or abs(event.the_k1.eta()) > 2.5: continue
+    #if event.the_k2.pt() < 0.5 or abs(event.the_k2.eta()) > 2.5: continue
+    #if event.the_k3.pt() < 0.5 or abs(event.the_k3.eta()) > 2.5: continue
+    #if event.the_k4.pt() < 0.5 or abs(event.the_k4.eta()) > 2.5: continue
     
     # compute Bs ct
     # searching for mother of Bs meson
@@ -748,6 +781,9 @@ def treeProducer(infiles, outdir, outfilename):
     tofill['Bs_ct_2D_ps'] = event.the_Bs.ct_2D_ps
     tofill['Bs_ct_3D_ps'] = event.the_Bs.ct_3D_ps
 
+    # trigger muon info
+    tofill['trgmu_mother_pdgid'] = the_trgmu_mother_pdgid
+
     #TODO add dxy?   
     #tofill['mu_fromB_dxy'     ] = get_dxy(event.the_pl)
     
@@ -773,8 +809,10 @@ def treeProducer(infiles, outdir, outfilename):
 if __name__ == "__main__":
   #version_label = 'test_v0'
   #version_label = 'crab_102X_crab_v0'
-  version_label = '102X_crab_trgmu_filter'
+  #version_label = '102X_crab_trgmu_filter'
   #version_label = 'test_trgmu_v0'
+  #version_label = 'test_filter_phi_v2'
+  version_label = 'test_fragment_v2'
   #user = 'anlyon'
   #lepton = 'all'
 
@@ -792,7 +830,11 @@ if __name__ == "__main__":
   #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_trgmu_filter/BsToPhiPhiTo4K/crab_102X_crab_trgmu_filter_BsToPhiPhiTo4K_20250212_225911/250212_215924/*'
 
 
-  indirectory = '/eos/user/a/anlyon/CPVGen/102X_crab_trgmu_filter/BsToPhiPhiTo4K/crab_102X_crab_trgmu_filter_BsToPhiPhiTo4K_20250212_225911/250212_215924/000*/'
+  #indirectory = '/eos/user/a/anlyon/CPVGen/102X_crab_trgmu_filter/BsToPhiPhiTo4K/crab_102X_crab_trgmu_filter_BsToPhiPhiTo4K_20250212_225911/250212_215924/0000/'
+  #indirectory = '/eos/user/a/anlyon/CPVGen/test_fragment_phi/BsToPhiPhiTo4K/crab_test_fragment_phi_BsToPhiPhiTo4K_20250521_165553/250521_145607/0000'
+  #indirectory = '/eos/user/a/anlyon/CPVGen/test_filter_phi_v2/BsToPhiPhiTo4K/crab_test_filter_phi_v2_BsToPhiPhiTo4K_20250521_231505/250521_211517/0000'
+  #indirectory = '/eos/user/a/anlyon/CPVGen/test_fragment_v1/BsToPhiPhiTo4K/crab_test_fragment_v1_BsToPhiPhiTo4K_20250522_200216/250522_180226/0000'
+  indirectory = '/eos/user/a/anlyon/CPVGen/{}/BsToPhiPhiTo4K/*/*/00*'.format(version_label)
 
   # get all the subdirectories (signal points)
   #pointdirs = [f for f in glob.glob('{}/*'.format(indirectory))]
