@@ -42,10 +42,10 @@ class CRABLauncher(object):
     self.eff_filter = eff * acc
     self.eff_nanoaod = 0.3 #FIXME too low?
 
-    #self.CMSSW = 'CMSSW_10_6_37/'
-    #self.GT = '106X_upgrade2018_realistic_v11_L1v1'
-    self.GT = '102X_upgrade2018_realistic_v11'
-    self.CMSSW = 'CMSSW_10_2_28_patch1' 
+    self.CMSSW = 'CMSSW_10_6_28/'
+    self.GT = '106X_upgrade2018_realistic_v11_L1v1'
+    #self.GT = '102X_upgrade2018_realistic_v11'
+    #self.CMSSW = 'CMSSW_10_2_28_patch1' 
 
     #TODO add sqrt(s) as parameter, as it is different between Run2 and Run3
 
@@ -112,8 +112,8 @@ class CRABLauncher(object):
 
     config = '\n'.join(config)
     config = config.format(
-        inputfiles = 'config.JobType.inputFiles = ["../../data/FrameworkJobReport.xml", "step1.py", "../../cmsDrivers/step2.py", "../../data/pileup_2018.root", "../../cmsDrivers/step3.py", "../../cmsDrivers/step4.py"]' if not self.dogenonly else 'config.JobType.inputFiles = ["../../data/FrameworkJobReport.xml", "step1.py"]',
-        outputfiles = '["step1.root", "step4.root"]' if not self.dogenonly else '["step1.root"]',
+        inputfiles = 'config.JobType.inputFiles = ["../../data/FrameworkJobReport.xml", "step1.py", "../../cmsDrivers/step_DIGI.py", "../../data/list_pu_files.py", "../../cmsDrivers/step_HLT.py", "../../cmsDrivers/step_RECO.py", "../../cmsDrivers/step_MINI.py"]' if not self.dogenonly else 'config.JobType.inputFiles = ["../../data/FrameworkJobReport.xml", "step1.py"]',
+        outputfiles = '["step1.root", "miniaod.root"]' if not self.dogenonly else '["step1.root"]',
         pl = self.pl,
         time = 30000, # in minutes
         nevtsjob = self.nevents_perjob,
@@ -140,21 +140,51 @@ class CRABLauncher(object):
         'echo "content of dir"',
         'ls -al',
         'echo " "',
-        'echo "will run step2"',
-        'cmsRun -j step2.log step2.py',
-        'echo "end run step2"',
+        'echo "will run step2 (DIGI)"',
+        'cmsRun -j step2.log step_DIGI.py',
+        'echo "end run step2 (DIGI)"',
         'echo "content of dir"',
         'ls -al',
         'echo " "',
-        'echo "will run step3"',
-        'cmsRun -j step3.log step3.py',
-        'echo "end run step3"',
+        'echo "Source new environment"',
+        'source /cvmfs/cms.cern.ch/cmsset_default.sh',
+        'if [ -r CMSSW_10_2_16_UL/src ] ; then',
+        '  echo release CMSSW_10_2_16_UL already exists',
+        'else',
+        '  scram p CMSSW CMSSW_10_2_16_UL',
+        'fi',
+        'cd CMSSW_10_2_16_UL/src',
+        'eval `scram runtime -sh`',
+        'scram b',
+        'cd ../..',
+        'echo " "',
+        'echo "will run step3 (HLT)"',
+        'cmsRun -j step3.log step_HLT.py',
+        'echo "end run step3 (HLT)"',
         'echo "content of dir"',
         'ls -al',
         'echo " "',
-        'echo "will run step4"',
-        'cmsRun -e -j FrameworkJobReport.xml step4.py',
-        'echo "end run step4"',
+        'echo "Source new environment"',
+        'source /cvmfs/cms.cern.ch/cmsset_default.sh',
+        'if [ -r CMSSW_10_6_28/src ] ; then',
+        '  echo release CMSSW_10_6_28 already exists',
+        'else',
+        '  scram p CMSSW CMSSW_10_6_28',
+        'fi',
+        'cd CMSSW_10_6_28/src',
+        'eval `scram runtime -sh`',
+        'scram b',
+        'cd ../..',
+        'echo " "',
+        'echo "will run step4 (RECO)"',
+        'cmsRun -j step4.log step_RECO.py',
+        'echo "end run step4 (RECO)"',
+        'echo "content of dir"',
+        'ls -al',
+        'echo " "',
+        'echo "will run step5 (MINI)"',
+        'cmsRun -e -j FrameworkJobReport.xml step_MINI.py',
+        'echo "end run step5 (MINI)"',
         'echo "Done"',
         ]
     else:
