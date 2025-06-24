@@ -451,6 +451,120 @@ def plot_asymmetry_graph_pdgid(inputfilename, outdir):
   canv.SaveAs(outdir + '/' + fig_name + '.pdf')
 
 
+def study_scale(quantity):
+
+  #inputfilename1 = './outputfiles/test_fragment_v2/genTree.root' # 102X, scale1p0, pt>0.5GeV, pdl2014
+  inputfilename1 = './outputfiles/test_scale1p0_2018/genTree.root' # 106X, scale1p0, pt>0.3GeV, pdl2020
+  inputfilename2 = './outputfiles/test_scale5p0/genTree.root' # 106X, scape5p0, pt>0.3GeV, pdl2020
+
+  f1 = ROOT.TFile.Open(inputfilename1, 'READ') 
+  f2 = ROOT.TFile.Open(inputfilename2, 'READ') 
+
+  tree1 = f1.Get('tree')
+  tree2 = f2.Get('tree')
+
+  canv_name = 'canv'
+  canv = ROOT.TCanvas(canv_name, canv_name, 800, 700)
+
+  pad_up = ROOT.TPad("pad_up","pad_up",0,0.25,1,1)
+  pad_up.Draw()
+  pad_down = ROOT.TPad("pad_down","pad_down",0,0,1,0.25)
+  pad_down.SetBottomMargin(0.25)
+  pad_down.Draw()
+
+
+  pad_up.cd()
+
+  if quantity.do_log:
+    pad_up.SetLogy()
+  canv.SetLeftMargin(0.15)
+  canv.SetBottomMargin(0.15)
+
+  leg = ROOT.TLegend(0.65, 0.6, 0.85, 0.8)
+  leg.SetTextSize(0.05)
+  leg.SetLineColor(0)
+  leg.SetFillColorAlpha(0, 0)
+  leg.SetBorderSize(0)
+
+  nbins = quantity.nbins
+  bin_min = quantity.bin_min
+  bin_max = quantity.bin_max
+      
+  hist1_name = 'hist1'
+  hist1 = ROOT.TH1D(hist1_name, hist1_name, nbins, bin_min, bin_max)
+  hist1.SetLineWidth(3)
+  hist1.SetLineColor(6)
+
+  hist2_name = 'hist2'
+  hist2 = ROOT.TH1D(hist2_name, hist2_name, nbins, bin_min, bin_max)
+  hist2.SetLineWidth(3)
+  hist2.SetLineColor(4)
+
+  tree1.Project(hist1_name, format(quantity.name))
+  tree2.Project(hist2_name, format(quantity.name))
+
+  hist1.Scale(1./hist1.Integral())
+  hist2.Scale(1./hist2.Integral())
+
+  leg.AddEntry(hist1, 'scale = 1.0')
+  leg.AddEntry(hist2, 'scale = 5.0')
+
+  hist1.SetTitle('')
+  hist1.GetXaxis().SetTitle(quantity.title)
+  hist1.GetXaxis().SetLabelSize(0.04)
+  hist1.GetXaxis().SetTitleSize(0.047)
+  hist1.GetXaxis().SetTitleOffset(1.)
+  hist1.GetYaxis().SetTitle('Normalised to unity')
+  hist1.GetYaxis().SetLabelSize(0.04)
+  hist1.GetYaxis().SetTitleSize(0.047)
+  hist1.GetYaxis().SetTitleOffset(1.1)
+  #hist1.GetYaxis().SetRangeUser(0.5, 1e5)
+
+  hist1.Draw('histo')
+  hist2.Draw('histo same')
+
+  leg.Draw()
+
+  pad_down.cd()
+
+  hist_ratio = hist1.Clone('hist_ratio')
+  hist_ratio.Divide(hist2)
+
+  hist_ratio.SetLineWidth(2)
+  hist_ratio.SetMarkerStyle(20)
+  hist_ratio.SetTitle('')
+
+  hist_ratio.GetXaxis().SetLabelSize(0.11)
+  hist_ratio.GetXaxis().SetTitleSize(0.13)
+  hist_ratio.GetXaxis().SetTitleOffset(0.8)
+  hist_ratio.GetYaxis().SetTitle('Ratio')
+  hist_ratio.GetYaxis().SetLabelSize(0.11)
+  hist_ratio.GetYaxis().SetTitleSize(0.13)
+  hist_ratio.GetYaxis().SetTitleOffset(0.345)
+  hist_ratio.GetYaxis().SetNdivisions(6)
+  hist_ratio.GetYaxis().SetRangeUser(0, 2)
+
+
+  hist_ratio.Draw('PE')
+
+  line = ROOT.TLine(quantity.bin_min, 1, quantity.bin_max, 1)
+  line.SetLineColor(4)
+  line.SetLineWidth(2)
+  line.Draw('same')
+      
+  canv.cd()
+  ROOT.gStyle.SetOptStat(0)
+
+  outdir = './myPlots/study_scale'
+  if not path.exists(outdir):
+    os.system('mkdir -p {}'.format(outdir))
+  fig_name = quantity.label
+
+  if quantity.do_log: fig_name += '_log'
+
+  canv.SaveAs(outdir + '/' + fig_name + '.png')
+  canv.SaveAs(outdir + '/' + fig_name + '.pdf')
+
 
 
 if __name__ == "__main__":
@@ -458,9 +572,10 @@ if __name__ == "__main__":
   do_plot_kaons = False
   do_plot_phis = False
   do_plot_mixing = False
-  do_plot_pdgid = True
+  do_plot_pdgid = False
   do_plot_asymmetry_mixing = False
   do_plot_asymmetry_pdgid = False
+  do_study_scale = True
 
   ROOT.gROOT.SetBatch(True)
   ROOT.TH1.SetDefaultSumw2()
@@ -554,9 +669,13 @@ if __name__ == "__main__":
     Quantity('k4_pdgid', 'k_{4} pdgid', 'k4_pdgid', 100, -800, 800, do_log=False),
     Quantity('k4_mass', 'k_{4} mass (GeV)', 'k4_mass', 60, 0., 1., do_log=False),
     Quantity('invmass_phi1phi2', 'm(#phi_{1}#phi_{2}) (GeV)', 'invmass_phi1phi2', 60, 5.2, 5.5, do_log=False),
+    Quantity('invmass_phi1phi2', 'm(#phi_{1}#phi_{2}) (GeV)', 'invmass_phi1phi2', 60, 5.2, 5.5, do_log=True),
     Quantity('invmass_k1k2k3k4', 'm(k_{1}k_{2}k_{3}k_{4}) (GeV)', 'invmass_k1k2k3k4', 60, 5.2, 5.5, do_log=False),
+    Quantity('invmass_k1k2k3k4', 'm(k_{1}k_{2}k_{3}k_{4}) (GeV)', 'invmass_k1k2k3k4', 60, 5.2, 5.5, do_log=True),
     Quantity('invmass_k1k2', 'm(k_{1}k_{2}) (GeV)', 'invmass_k1k2', 60, 0.98, 1.05, do_log=False),
+    Quantity('invmass_k1k2', 'm(k_{1}k_{2}) (GeV)', 'invmass_k1k2', 60, 0.98, 1.05, do_log=True),
     Quantity('invmass_k3k4', 'm(k_{3}k_{4}) (GeV)', 'invmass_k3k4', 60, 0.98, 1.05, do_log=False),
+    Quantity('invmass_k3k4', 'm(k_{3}k_{4}) (GeV)', 'invmass_k3k4', 60, 0.98, 1.05, do_log=True),
     Quantity('charge_phi1phi2', 'charge(#phi_{1}#phi_{2})', 'charge_phi1phi2', 5, -2, 2, do_log=False),
     Quantity('charge_k1k2', 'charge(k_{1}k_{2})', 'charge_k1k2', 5, -2, 2, do_log=False),
     Quantity('charge_k3k4', 'charge(k_{3}k_{4})', 'charge_k3k4', 5, -2, 2, do_log=False),
@@ -576,5 +695,8 @@ if __name__ == "__main__":
   if do_plot_asymmetry_pdgid:
     plot_asymmetry_graph_pdgid(inputfilename=inputfilename, outdir=outdir)
 
+  if do_study_scale:
+    for quantity in quantities:
+      study_scale(quantity=quantity)
 
 
