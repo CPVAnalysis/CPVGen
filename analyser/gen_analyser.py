@@ -230,7 +230,7 @@ branches = [
 #tofill = OrderedDict(zip(branches, [-99.]*len(branches))) # initialise all branches to unphysical -99       
 #
 ## get to the real thing
-#print 'loading the file ...'
+#print('loading the file ...')
 #infiles = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/BHNLsGen/test_modfilter_v3_n10000000_njt500/mass4.5_ctau1.0/step1*.root'
 ##infiles = '/pnfs/psi.ch/cms/trivcat/store/user/mratti/BHNLsGen/V33_stats_Lxy1300_tkPt500MeV_lepPt400MeV/mass4.5_ctau1.0/step1*root'
 
@@ -238,11 +238,11 @@ branches = [
 #def treeProducer(infiles, outdir, outfilename, lepton):
 def treeProducer(infiles, outdir, outfilename):
   # get the files
-  print 'loading the file ...'
+  print('loading the file ...')
   files = glob.glob(infiles)
   events = Events(files)
-  print 'nevts: ',events.size()
-  print '... done!'
+  print('nevts: ',events.size())
+  print('... done!')
 
   # get the handles
   handles = OrderedDict()
@@ -275,7 +275,7 @@ def treeProducer(infiles, outdir, outfilename):
 
   for i, event in enumerate(events):
     #if float(i)>1000: break
-    #print '\n\n Event {}'.format(i)
+    #print('\n\n Event {}'.format(i))
 
     # access the handles
     for k, v in handles.iteritems():
@@ -284,7 +284,7 @@ def treeProducer(infiles, outdir, outfilename):
 
     if i%1000==0:
         percentage = float(i)/events.size()*100.
-        print '\t===> processing %d / %d event \t completed %.1f%s' %(i, events.size(), percentage, '%')
+        print('\t===> processing %d / %d event \t completed %.1f%s' %(i, events.size(), percentage, '%'))
 
     count_tot += 1
 
@@ -295,21 +295,21 @@ def treeProducer(infiles, outdir, outfilename):
       the_muons = sorted([ii for ii in muons], key = lambda x : x.pt(), reverse=True)
       if len(the_muons) != 0:
         count_mu_trg += 1
-        #print 'number of triggering muon: {}'.format(len(the_muons))
+        #print('number of triggering muon: {}'.format(len(the_muons)))
         for the_muon in the_muons:
-         #print 'trigger muon: {}'.format(the_muon.pdgId())
+         #print('trigger muon: {}'.format(the_muon.pdgId()))
          mu_mothers = [the_muon.mother(jj) for jj in range(the_muon.numberOfMothers())]
          the_mu_mothers = sorted([ii for ii in mu_mothers], key = lambda x : x.pt(), reverse=True)
-         ##print 'the mothers are:'
+         ##print('the mothers are:')
          for the_mu_mother in the_mu_mothers:
-           #print the_mu_mother.pdgId()
+           #print(the_mu_mother.pdgId())
            if abs(the_mu_mother.pdgId()) in [511, 521, 531]:
              count_B_meson += 1
            elif abs(the_mu_mother.pdgId()) in [5122, 5132, 5232]:
              count_B_baryon += 1
            else:
              count_other += 1 
-             print 'other mother pdgid: {}'.format(abs(the_mu_mother.pdgId()))
+             #print('other mother pdgid: {}'.format(abs(the_mu_mother.pdgId())))
 
            the_trgmu_mother_pdgid = the_mu_mother.pdgId()
 
@@ -320,8 +320,8 @@ def treeProducer(infiles, outdir, outfilename):
            #mu_grandmothers = [the_mu_mother.mother(jj) for jj in range(the_mu_mother.numberOfMothers())]
            #the_mu_grandmothers = sorted([ii for ii in mu_grandmothers], key = lambda x : x.pt(), reverse=True)
            #for the_mu_grandmother in the_mu_grandmothers:
-           #  print 'grandmother:'
-           #  print the_mu_grandmother.pdgId()
+           #  print('grandmother:')
+           #  print(the_mu_grandmother.pdgId())
 
       #else:
       #  continue #TODO remove eventually
@@ -342,7 +342,7 @@ def treeProducer(infiles, outdir, outfilename):
 
     # get the Bs mesons
     the_Bs_mesons = [ip for ip in event.genP if abs(ip.pdgId())==531 and ip.isLastCopy()]
-    #print 'number of Bs mesons: {}'.format(len(the_Bs_mesons))
+    #print('number of Bs mesons: {}'.format(len(the_Bs_mesons))))
 
     # find Bs meson that has two phi daughters
     idx_Bs = -99
@@ -351,21 +351,21 @@ def treeProducer(infiles, outdir, outfilename):
       #Bs_daughters = [the_Bs_meson.daughter(jj) for jj in range(the_Bs_meson.numberOfDaughters()) if the_Bs_meson.daughter(jj).pdgId() == 333]
       number_phi_daughters = len(get_list_daughters(mother=the_Bs_meson, pdgid=333))
       if number_phi_daughters == 2:
-        #print 'B meson {} has 2 phi daughters'.format(iBs)
+        #print('B meson {} has 2 phi daughters'.format(iBs))
         idx_Bs = iBs
         count_Bs_has_two_phi_daughters += 1
       #elif number_phi_daughters > 0 and number_phi_daughters != 2:
-      #  print 'WARNING: there are not exactly 2 phi daughters'
+      #  print('WARNING: there are not exactly 2 phi daughters')
      # elif number_phi_daughters > 0 and number_phi_daughters < 2:
-     #   print 'WARNING: there are less than 2 phi daughtersi for Bs meson {}'.format(iBs)
-     #   print 'number of Bs mesons: {}'.format(len(the_Bs_mesons))
+     #   print('WARNING: there are less than 2 phi daughtersi for Bs meson {}'.format(iBs))
+     #   print('number of Bs mesons: {}'.format(len(the_Bs_mesons)))
 
     if count_Bs_has_two_phi_daughters == 0:
-      print 'WARNING - no Bs meson decaying to two phi mesons was found'
-      print '--> skipping event'
+      print('WARNING - no Bs meson decaying to two phi mesons was found')
+      print('--> skipping event')
       continue
     if count_Bs_has_two_phi_daughters != 1:
-      print 'number of Bs mesons with 2 phi daughters: {}'.format(count_Bs_has_two_phi_daughters)
+      print('number of Bs mesons with 2 phi daughters: {}'.format(count_Bs_has_two_phi_daughters))
         
     event.the_Bs = the_Bs_mesons[idx_Bs]
 
@@ -431,7 +431,7 @@ def treeProducer(infiles, outdir, outfilename):
       elif decay_chain == [-531, -533, -541, -543]:
         chain_Bcstarbar_to_Bcbar_to_Bsstarbar_to_Bsbar_to_Bs_to_phiphi = 1
       else:
-        print "WARNING: unknown decay chain for Bs: {}".format(decay_chain)
+        print("WARNING: unknown decay chain for Bs: {}".format(decay_chain))
 
     # Bsbar decays
     if event.the_Bs.pdgId() == -531:
@@ -460,7 +460,7 @@ def treeProducer(infiles, outdir, outfilename):
       elif decay_chain == [531, 533, 541, 543]:
         chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi = 1
       else:
-        print "WARNING: unknown decay chain for Bsbar: {}".format(decay_chain)
+        print("WARNING: unknown decay chain for Bsbar: {}".format(decay_chain))
 
     is_Bs_unmixed = 0
     is_Bs_mixed = 0
@@ -478,10 +478,10 @@ def treeProducer(infiles, outdir, outfilename):
     elif chain_Bs_to_Bsbar_to_phiphi or chain_Bsstar_to_Bs_to_Bsbar_to_phiphi or chain_Bc_to_Bs_to_Bsbar_to_phiphi or chain_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi or chain_Bcstar_to_Bc_to_Bs_to_Bsbar_to_phiphi or chain_Bcstar_to_Bc_to_Bsstar_to_Bs_to_Bsbar_to_phiphi:
       is_Bsbar_mixed = 1
     else:
-      print 'WARNING - unknown decay chain'
+      print('WARNING - unknown decay chain')
 
     if is_Bs_unmixed + is_Bs_mixed + is_Bsbar_unmixed + is_Bsbar_mixed != 1:
-      print 'WARNING - Faulty logic - Please check' 
+      print('WARNING - Faulty logic - Please check')
 
     if is_Bs_unmixed or is_Bsbar_unmixed:
       is_unmixed = 1
@@ -495,18 +495,18 @@ def treeProducer(infiles, outdir, outfilename):
     event.the_phis_p4 = event.the_phi1.polarP4() + event.the_phi2.polarP4()
     #Bs_invmass = event.the_phis_p4.mass()
     #Bs_invpt = event.the_phis_p4.pt()
-    #print '{}%'.format(((Bs_invmass - 5.367) / 5.367) * 100)
-    #print '{}%'.format(((event.the_Bs.p4().mass() - 5.367) / 5.367) * 100)
-    #print Bs_invpt
+    #print('{}%'.format(((Bs_invmass - 5.367) / 5.367) * 100))
+    #print('{}%'.format(((event.the_Bs.p4().mass() - 5.367) / 5.367) * 100))
+    #print(Bs_invpt)
 
     # daughters of phi1 (kaons)
     phi1_daughters = get_list_daughters(mother=event.the_phi1, pdgid=321)
-    #print len(phi1_daughters)
+    #print(len(phi1_daughters))
     #for phi1_daughter in phi1_daughters:
-    #  print phi1_daughter.pdgId()
+    #  print(phi1_daughter.pdgId())
     if len(phi1_daughters) == 0:
-      print 'WARNING: no kaon found as daughter of phi1'
-      print '--> skipping'
+      print('WARNING: no kaon found as daughter of phi1')
+      print('--> skipping')
       continue
     event.the_k1 = phi1_daughters[0]  
     event.the_k2 = phi1_daughters[1]  
@@ -514,8 +514,8 @@ def treeProducer(infiles, outdir, outfilename):
     # daughters of phi2 (kaons)
     phi2_daughters = get_list_daughters(mother=event.the_phi2, pdgid=321)
     if len(phi2_daughters) == 0:
-      print 'WARNING: no kaon found as daughter of phi2'
-      print '--> skipping'
+      print('WARNING: no kaon found as daughter of phi2')
+      print('--> skipping')
       continue
     event.the_k3 = phi2_daughters[0]  
     event.the_k4 = phi2_daughters[1]  
@@ -535,29 +535,29 @@ def treeProducer(infiles, outdir, outfilename):
       count_acceptance += 1
 
     #if event.the_k1.pt() < 0.5 or abs(event.the_k1.eta()) > 2.5:
-    #  print 'k1 {} {} not passing acceptance cuts'.format(event.the_k1.pt(), event.the_k1.eta())
-    #  print event.the_phi1.pdgId()
-    #  print event.the_k1.pdgId()
-    #  #print decay_chain
-    #  #print 'is mixed {}'.format(is_Bs_mixed)
+    #  print('k1 {} {} not passing acceptance cuts'.format(event.the_k1.pt(), event.the_k1.eta()))
+    #  print(event.the_phi1.pdgId())
+    #  print(event.the_k1.pdgId())
+    #  #print(decay_chain)
+    #  #print('is mixed {}'.format(is_Bs_mixed))
     #if event.the_k2.pt() < 0.5 or abs(event.the_k2.eta()) > 2.5:
-    #  print 'k2 {} {} not passing acceptance cuts'.format(event.the_k2.pt(), event.the_k2.eta())
-    #  print event.the_phi1.pdgId()
-    #  print event.the_k2.pdgId()
-    #  #print decay_chain
-    #  #print 'is mixed {}'.format(is_Bs_mixed)
+    #  print('k2 {} {} not passing acceptance cuts'.format(event.the_k2.pt(), event.the_k2.eta()))
+    #  print(event.the_phi1.pdgId())
+    #  print(event.the_k2.pdgId())
+    #  #print(decay_chain)
+    #  #print('is mixed {}'.format(is_Bs_mixed))
     #if event.the_k3.pt() < 0.5 or abs(event.the_k3.eta()) > 2.5:
-    #  print 'k3 {} {} not passing acceptance cuts'.format(event.the_k3.pt(), event.the_k3.eta())
-    #  print event.the_phi2.pdgId()
-    #  print event.the_k3.pdgId()
-    #  #print decay_chain
-    #  #print 'is mixed {}'.format(is_Bs_mixed)
+    #  print('k3 {} {} not passing acceptance cuts'.format(event.the_k3.pt(), event.the_k3.eta()))
+    #  print(event.the_phi2.pdgId())
+    #  print(event.the_k3.pdgId())
+    #  #print(decay_chain)
+    #  #print('is mixed {}'.format(is_Bs_mixed))
     #if event.the_k4.pt() < 0.5 or abs(event.the_k4.eta()) > 2.5:
-    #  print 'k4 {} {} not passing acceptance cuts'.format(event.the_k4.pt(), event.the_k4.eta())
-    #  print event.the_phi2.pdgId()
-    #  print event.the_k4.pdgId()
-    #  #print decay_chain
-    #  #print 'is mixed {}'.format(is_Bs_mixed)
+    #  print('k4 {} {} not passing acceptance cuts'.format(event.the_k4.pt(), event.the_k4.eta()))
+    #  print(event.the_phi2.pdgId())
+    #  print(event.the_k4.pdgId())
+    #  #print(decay_chain)
+    #  #print('is mixed {}'.format(is_Bs_mixed))
 
     # enforce acceptance cuts
     #if event.the_k1.pt() < 0.5 or abs(event.the_k1.eta()) > 2.5: continue
@@ -651,7 +651,7 @@ def treeProducer(infiles, outdir, outfilename):
     ## we get the lifetime from the kinematics 
     #if len(the_pls) and len(the_lep_daughters):
     #  event.the_hn.ct_reco = event.Lxyz / (event.the_hn.beta * event.the_hn.gamma)
-    #  #print 'hnl ct reco: {a}'.format(a=event.the_hn.ct_reco)
+    #  #print('hnl ct reco: {a}'.format(a=event.the_hn.ct_reco))
 
 
     #event.Lxyz_pl = np.sqrt((event.the_b_mother.vx() - event.the_pl.vx())**2 + \
@@ -790,16 +790,16 @@ def treeProducer(infiles, outdir, outfilename):
     ntuple.Fill(array('f',tofill.values()))
 
   if do_trgmu_study:
-    print 'list of mother pdgid:'
-    print list_mu_mother_pdgid
+    print('list of mother pdgid:')
+    print(list_mu_mother_pdgid)
 
-    print 'percentage of events with triggering muon: {}%'.format((count_mu_trg / float(count_tot)) * 100)
-    print 'percentage of events with triggering muon from B meson: {}%'.format((count_B_meson / float(count_mu_trg)) * 100)
-    print 'percentage of events with triggering muon from B baryon: {}%'.format((count_B_baryon / float(count_mu_trg)) * 100)
-    print 'percentage of events with triggering muon from other particle: {}%'.format((count_other / float(count_mu_trg)) * 100)
+    print('percentage of events with triggering muon: {}%'.format((count_mu_trg / float(count_tot)) * 100))
+    print('percentage of events with triggering muon from B meson: {}%'.format((count_B_meson / float(count_mu_trg)) * 100))
+    print('percentage of events with triggering muon from B baryon: {}%'.format((count_B_baryon / float(count_mu_trg)) * 100))
+    print('percentage of events with triggering muon from other particle: {}%'.format((count_other / float(count_mu_trg)) * 100))
 
   acceptance = count_acceptance / float(count_tot) * 100
-  print 'acceptance = {} / {} = {}%'.format(count_acceptance, count_tot, acceptance)
+  print('acceptance = {} / {} = {}%'.format(count_acceptance, count_tot, acceptance))
 
   outfile.cd()
   ntuple.Write()
@@ -812,23 +812,10 @@ if __name__ == "__main__":
   #version_label = '102X_crab_trgmu_filter'
   #version_label = 'test_trgmu_v0'
   #version_label = 'test_filter_phi_v2'
-  version_label = 'test_fragment_v2'
-  #user = 'anlyon'
-  #lepton = 'all'
-
-  #if lepton not in ['muon', 'electron', 'all']:
-  #  raise RuntimeError("Lepton not known. Choose among ['muon', 'electron', 'all']")
-
-  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/{}/BHNLsGen/{}'.format(user, version_label)
-  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/{}/CPVGen/{}'.format(user, version_label)
-  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_v0/BsToPhiPhiTo4K/crab_102X_crab_v0_BsToPhiPhiTo4K_20250130_141241/250130_131709/0000'
-
-  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_v0/BsToPhiPhiTo4K/crab_102X_crab_v0_BsToPhiPhiTo4K_20250130_141241/250130_131709/0000'
-  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_v0/BsToPhiPhiTo4K/crab_102X_crab_v0_BsToPhiPhiTo4K_20250203_151733/250203_141746/0000'
-  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/test_trgmu_v0'
- 
-  #indirectory = '/pnfs/psi.ch/cms/trivcat/store/user/anlyon/CPVGen/102X_crab_trgmu_filter/BsToPhiPhiTo4K/crab_102X_crab_trgmu_filter_BsToPhiPhiTo4K_20250212_225911/250212_215924/*'
-
+  #version_label = 'test_fragment_v2'
+  #version_label = 'test_scale5p0'
+  version_label = 'test_scale1p0_2018'
+  #version_label = 'validation_v0_2022'
 
   #indirectory = '/eos/user/a/anlyon/CPVGen/102X_crab_trgmu_filter/BsToPhiPhiTo4K/crab_102X_crab_trgmu_filter_BsToPhiPhiTo4K_20250212_225911/250212_215924/0000/'
   #indirectory = '/eos/user/a/anlyon/CPVGen/test_fragment_phi/BsToPhiPhiTo4K/crab_test_fragment_phi_BsToPhiPhiTo4K_20250521_165553/250521_145607/0000'
@@ -836,17 +823,9 @@ if __name__ == "__main__":
   #indirectory = '/eos/user/a/anlyon/CPVGen/test_fragment_v1/BsToPhiPhiTo4K/crab_test_fragment_v1_BsToPhiPhiTo4K_20250522_200216/250522_180226/0000'
   indirectory = '/eos/user/a/anlyon/CPVGen/{}/BsToPhiPhiTo4K/*/*/00*'.format(version_label)
 
-  # get all the subdirectories (signal points)
-  #pointdirs = [f for f in glob.glob('{}/*'.format(indirectory))]
-
-  #for pointdir in pointdirs:
-  print '----------------------'
-  print ' Analysing {}'.format(indirectory)
-  print '----------------------'
-
-  #if 'mass2.0_ctau10.0' not in pointdir: continue
-
-  #pointname = pointdir[pointdir.rfind('/')+1:].replace('.', 'p')
+  print('----------------------')
+  print(' Analysing {}'.format(indirectory))
+  print('----------------------')
 
   infiles = '{}/step1*root'.format(indirectory)
   outdir = './outputfiles/{}'.format(version_label)
@@ -855,5 +834,4 @@ if __name__ == "__main__":
   if not path.exists(outdir):
     os.system('mkdir -p {}'.format(outdir))
 
-  #treeProducer(infiles=infiles, outdir=outdir, outfilename=outfilename, lepton=lepton)
   treeProducer(infiles=infiles, outdir=outdir, outfilename=outfilename)
