@@ -7,12 +7,11 @@ generator = cms.EDFilter(
     pythiaHepMCVerbosity = cms.untracked.bool(False),
     maxEventsToPrint = cms.untracked.int32(0),
     pythiaPylistVerbosity = cms.untracked.int32(0),
-    comEnergy = cms.double(13000.0), #TODO make sure to update for Run 3
+    comEnergy = cms.double(13000.0),
     ExternalDecays = cms.PSet(
         EvtGen130 = cms.untracked.PSet(
             decay_table = cms.string('GeneratorInterface/EvtGenInterface/data/DECAY_2014_NOLONGLIFE.DEC'),
-            particle_property_file = cms.FileInPath('GeneratorInterface/EvtGenInterface/data/evt_2014.pdl'),
-            #particle_property_file = cms.FileInPath('GeneratorInterface/EvtGenInterface/data/evt_2020.pdl'), # available with 10_6_X
+            particle_property_file = cms.FileInPath('GeneratorInterface/EvtGenInterface/data/evt_2020.pdl'),
             user_decay_embedded= cms.vstring(
                 # The following relationshop must hold: 
                 # HpHp + HzHz + HmHm = 1
@@ -80,7 +79,7 @@ generator = cms.EDFilter(
             "SoftQCD:nonDiffractive = on",
             'PTFilter:filter = on',
             'PTFilter:quarkToFilter = 5',
-            'PTFilter:scaleToFilter = 1.0' # in BHNL: is 5.0
+            'PTFilter:scaleToFilter = 5.0'
         ),
         parameterSets = cms.vstring(
             'pythia8CommonSettings',
