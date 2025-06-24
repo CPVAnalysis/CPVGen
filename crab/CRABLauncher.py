@@ -19,10 +19,12 @@ def getOptions():
 
 
 class CMSDriver(object):
-    def __init__(self, era, global_tag, beamspot_conditions):
+    def __init__(self, era, global_tag, beamspot_conditions, fragment_name, CMSSW):
         self.era = era
         self.global_tag = global_tag
         self.beamspot_conditions = beamspot_conditions
+        self.fragment_name = fragment_name
+        self.CMSSW = CMSSW
 
 
 class CRABLauncher(object):
@@ -67,28 +69,26 @@ class CRABLauncher(object):
         self.driver = CMSDriver(
                 era = 'Run2_2018',
                 global_tag = '106X_upgrade2018_realistic_v11_L1v1',
-                beamspot_conditions = 'Realistic25ns13TeVEarly2018Collision'
+                beamspot_conditions = 'Realistic25ns13TeVEarly2018Collision',
+                fragment_name = 'BsToPhiPhiTo4K_cfi.py',
+                CMSSW = 'CMSSW_10_6_28',
                 )
     elif self.year == 2022:
         self.driver = CMSDriver(
                 era = 'Run3',
                 global_tag = '124X_mcRun3_2022_realistic_v12',
-                beamspot_conditions = 'Realistic25ns13p6TeVEarly2022Collision'
+                beamspot_conditions = 'Realistic25ns13p6TeVEarly2022Collision',
+                fragment_name = 'BsToPhiPhiTo4K_Run3_cfi.py',
+                CMSSW = 'CMSSW_12_4_24',
                 )
     elif self.year == 2024:
         self.driver = CMSDriver(
                 era = 'Run3_2024',
                 global_tag = '140X_mcRun3_2024_realistic_v26',
-                beamspot_conditions = 'Realistic'
+                beamspot_conditions = 'Realistic',
+                fragment_name = 'BsToPhiPhiTo4K_Run3_cfi.py',
+                CMSSW = 'CMSSW_14_0_21',
                 )
-
-    if self.year == 2018:
-      self.fragment_name = 'BsToPhiPhiTo4K_cfi.py'
-      self.CMSSW = 'CMSSW_10_6_28'
-    else:
-      self.fragment_name = 'BsToPhiPhiTo4K_Run3_cfi.py'
-      self.CMSSW = 'CMSSW_14_0_21'
-
 
 
   def createOuputDir(self):
@@ -265,7 +265,7 @@ class CRABLauncher(object):
 
     submitter = '\n'.join(submitter)
     submitter = submitter.format(
-        cmssw = self.CMSSW,
+        cmssw = self.driver.CMSSW,
         )
 
     submitter_filename = './production/{pl}/submitter.sh'.format(pl=self.pl)
@@ -297,17 +297,17 @@ class CRABLauncher(object):
         'PRODDIR=$PWD/production/{pl}',
         'WORKDIR=$CMSSW_BASE/src',
         'cd $WORKDIR',
-        'echo "Source new environment"',
-        'source /cvmfs/cms.cern.ch/cmsset_default.sh',
-        'if [ -r {cmssw}/src ] ; then',
-        '  echo release {cmssw} already exists',
-        'else',
-        '  scram p CMSSW {cmssw}',
-        'fi',
-        'cd {cmssw}/src',
-        'eval `scram runtime -sh`',
-        'scram b',
-        'cd ../..',
+        #'echo "Source new environment"',
+        #'source /cvmfs/cms.cern.ch/cmsset_default.sh',
+        #'if [ -r {cmssw}/src ] ; then',
+        #'  echo release {cmssw} already exists',
+        #'else',
+        #'  scram p CMSSW {cmssw}',
+        #'fi',
+        #'cd {cmssw}/src',
+        #'eval `scram runtime -sh`',
+        #'scram b',
+        #'cd ../..',
         'mkdir -p Configuration/GenProduction/python/',
         'cp $STARTDIR/../fragments/{frgmt} Configuration/GenProduction/python/fragment.py',
         'scram b -j 8',
@@ -320,10 +320,10 @@ class CRABLauncher(object):
       submitter_tmp = '\n'.join(submitter_tmp)
       submitter_tmp = submitter_tmp.format(
           pl = self.pl,
-          frgmt = self.fragment_name,
+          frgmt = self.driver.fragment_name,
           cmd = command,
           cmd_rpl = command_replace,
-          cmssw = self.CMSSW,
+          cmssw = self.driver.CMSSW,
           )
 
       submitter_tmp_file = open('submitter_tmp.sh', 'w+')
@@ -337,250 +337,21 @@ class CRABLauncher(object):
 
 
   def createStep1(self):
-    part1 = [ 
-       "import FWCore.ParameterSet.Config as cms",
-       " ",
-       "from Configuration.Eras.Era_{era}_cff import {era}",
-       " ",
-       "process = cms.Process('GEN', {era})",
-       " ",
-       "process.load('Configuration.StandardSequences.Services_cff')",
-       "process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')",
-       "process.load('FWCore.MessageService.MessageLogger_cfi')",
-       "process.load('Configuration.EventContent.EventContent_cff')",
-       "process.load('SimGeneral.MixingModule.mixNoPU_cfi')",
-       "process.load('Configuration.StandardSequences.GeometryRecoDB_cff')",
-       "process.load('Configuration.StandardSequences.MagneticField_cff')",
-       "process.load('Configuration.StandardSequences.Generator_cff')",
-       "process.load('IOMC.EventVertexGenerators.VtxSmeared{bs}_cfi')",
-       "process.load('GeneratorInterface.Core.genFilterSummary_cff')",
-       "process.load('Configuration.StandardSequences.EndOfProcess_cff')",
-       "process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')",
-       " ",
-       "process.maxEvents = cms.untracked.PSet(",
-       "    input = cms.untracked.int32({nevents})",
-       ")",
-       " ",
-       "process.source = cms.Source('EmptySource')",
-       " ",
-       "process.options = cms.untracked.PSet(",
-       " ",
-       ")",
-       " ",
-       "process.configurationMetadata = cms.untracked.PSet(",
-       "    annotation = cms.untracked.string('Configuration/GenProduction/python/fragment.py nevts:{nevents}'),",
-       "    name = cms.untracked.string('Applications'),",
-       "    version = cms.untracked.string('$Revision: 1.19 $')",
-       ")",
-       " ",
-       " ",
-       "process.FEVTDEBUGoutput = cms.OutputModule('PoolOutputModule',",
-       "    SelectEvents = cms.untracked.PSet(",
-       "        SelectEvents = cms.vstring('generation_step')",
-       "    ),",
-       "    dataset = cms.untracked.PSet(",
-       "        dataTier = cms.untracked.string('{step}'),",
-       "        filterName = cms.untracked.string('')",
-       "    ),",
-       "    fileName = cms.untracked.string('file:step1.root'),",
-       "    outputCommands = process.FEVTDEBUGEventContent.outputCommands,",
-       "    splitLevel = cms.untracked.int32(0)",
-       ")",
-       " ",
-       "process.genstepfilter.triggerConditions=cms.vstring('generation_step')",
-       "from Configuration.AlCa.GlobalTag import GlobalTag",
-       "process.GlobalTag = GlobalTag(process.GlobalTag, '{gt}', '')",
-       " ",
-       " ",
-       ]
-      
-    part1 = '\n'.join(part1)
-    part1 = part1.format(
-          gt = self.driver.global_tag,
-          bs = self.driver.beamspot_conditions,
-          era = self.driver.era,
-          nevents = self.nevents_perjob,
-          step = 'GEN-SIM' if not self.dogenonly else 'GEN',
-        )
 
-    fragment = [
-       "process.generator = cms.EDFilter('Pythia8GeneratorFilter',",
-       "    ExternalDecays = cms.PSet(",
-       "        EvtGen130 = cms.untracked.PSet(",
-       "            convertPythiaCodes = cms.untracked.bool(False),",
-       "            decay_table = cms.string('GeneratorInterface/EvtGenInterface/data/DECAY_2014_NOLONGLIFE.DEC'),",
-       "            list_forced_decays = cms.vstring(",
-       "                'MyB_s0',",
-       "                'Myanti-B_s0',", 
-       "                'MyPhi'",
-       "            ),",
-       "            operates_on_particles = cms.vint32(531, -531, 333),",
-       "            particle_property_file = cms.FileInPath('GeneratorInterface/EvtGenInterface/data/evt_2020.pdl'),",
-       "            user_decay_embedded = cms.vstring(",
-       "                'Define Hp 0.558',", 
-       "                'Define Hz 0.616',", 
-       "                'Define Hm 0.557',", 
-       "                'Define pHp 2.469',", 
-       "                'Define pHz 0.0',", 
-       "                'Define pHm 2.75',", 
-       "                '',", 
-       "                'Alias      MyB_s0   B_s0',", 
-       "                'Alias      Myanti-B_s0   anti-B_s0',", 
-       "                'ChargeConj Myanti-B_s0   MyB_s0',", 
-       "                'Alias      MyPhi phi',", 
-       "                'ChargeConj MyPhi MyPhi',", 
-       "                '',", 
-       "                'Decay MyB_s0',", 
-       "                '1.000       MyPhi      MyPhi    PVV_CPLH 0.02 1 Hp pHp Hz pHz Hm pHm;',",
-       "                'Enddecay',", 
-       "                'Decay Myanti-B_s0',",
-       "                '1.000       MyPhi      MyPhi    PVV_CPLH 0.02 1 Hp pHp Hz pHz Hm pHm;',",
-       "                'Enddecay',", 
-       "                'Decay MyPhi',",
-       "                '1.000      K+         K-       VSS;',",
-       "                'Enddecay',", 
-       "                'End'",
-       "            )",
-       "        ),",
-       "        parameterSets = cms.vstring('EvtGen130')",
-       "    ),",
-       "    PythiaParameters = cms.PSet(",
-       "        parameterSets = cms.vstring(",
-       "            'pythia8CommonSettings',", 
-       "            'pythia8CP5Settings',", 
-       "            'processParameters'",
-       "        ),",
-       "        processParameters = cms.vstring(",
-       "            'SoftQCD:nonDiffractive = on',", 
-       "            'PTFilter:filter = on',", 
-       "            'PTFilter:quarkToFilter = 5',", 
-       "            'PTFilter:scaleToFilter = 5.0'",
-       "        ),",
-       "        pythia8CP5Settings = cms.vstring(",
-       "            'Tune:pp 14',", 
-       "            'Tune:ee 7',", 
-       "            'MultipartonInteractions:ecmPow=0.03344',",
-       "            'MultipartonInteractions:bProfile=2',", 
-       "            'MultipartonInteractions:pT0Ref=1.41',", 
-       "            'MultipartonInteractions:coreRadius=0.7634',", 
-       "            'MultipartonInteractions:coreFraction=0.63',", 
-       "            'ColourReconnection:range=5.176',", 
-       "            'SigmaTotal:zeroAXB=off',", 
-       "            'SpaceShower:alphaSorder=2',", 
-       "            'SpaceShower:alphaSvalue=0.118',", 
-       "            'SigmaProcess:alphaSvalue=0.118',", 
-       "            'SigmaProcess:alphaSorder=2',", 
-       "            'MultipartonInteractions:alphaSvalue=0.118',",
-       "            'MultipartonInteractions:alphaSorder=2',", 
-       "            'TimeShower:alphaSorder=2',", 
-       "            'TimeShower:alphaSvalue=0.118',", 
-       "            'SigmaTotal:mode = 0',", 
-       "            'SigmaTotal:sigmaEl = 21.89',",
-       "            'SigmaTotal:sigmaTot = 100.309',",
-       "            'PDF:pSet=LHAPDF6:NNPDF31_nnlo_as_0118'",
-       "        ),",
-       "        pythia8CommonSettings = cms.vstring(",
-       "            'Tune:preferLHAPDF = 2',", 
-       "            'Main:timesAllowErrors = 10000',",
-       "            'Check:epTolErr = 0.01',", 
-       "            'Beams:setProductionScalesFromLHEF = off',",
-       "            #'SLHA:keepSM = on',", 
-       "            'SLHA:minMassSM = 1000.',", 
-       "            'ParticleDecays:limitTau0 = on',", 
-       "            'ParticleDecays:tau0Max = 10',", 
-       "            'ParticleDecays:allowPhotonRadiation = on'",
-       "        )",
-       "    ),",
-       "    comEnergy = cms.double({com}),",
-       "    maxEventsToPrint = cms.untracked.int32(0),",
-       "    pythiaHepMCVerbosity = cms.untracked.bool(False),",
-       "    pythiaPylistVerbosity = cms.untracked.int32(0)",
-       ")",
-       " ",
-       "process.BFilter = cms.EDFilter('PythiaFilter',",
-       "    MaxEta = cms.untracked.double(10.0),",
-       "    MinEta = cms.untracked.double(-10.0),",
-       "    ParticleID = cms.untracked.int32(531)",
-       ")",
-       " ",
-       " ",
-       "process.BsDecayFilter = cms.EDFilter('PythiaDauVFilter',",
-       "    DaughterIDs = cms.untracked.vint32(333, 333),",
-       "    MaxEta = cms.untracked.vdouble(10.0, 10.0),",
-       "    MinEta = cms.untracked.vdouble(-10.0, -10.0),",
-       "    MinPt = cms.untracked.vdouble(0.0, 0.0),",
-       "    NumberDaughters = cms.untracked.int32(2),",
-       "    ParticleID = cms.untracked.int32(531),",
-       "    verbose = cms.untracked.int32(1)",
-       ")",
-       " ",
-       "process.TriggerMuonFilter = cms.EDFilter('PythiaFilter',",
-       "    MaxEta = cms.untracked.double(1.55),",
-       "    MinEta = cms.untracked.double(-1.55),",
-       "    MinPt = cms.untracked.double(6.8),",
-       "    ParticleID = cms.untracked.int32(13)",
-       ")",
-       " ",
-       " ",
-       "process.PhiDecayFilter = cms.EDFilter('MCMultiParticleFilter',",
-       "    AcceptMore = cms.bool(True),",
-       "    EtaMax = cms.vdouble(2.5),",
-       "    MotherID = cms.untracked.vint32(333),",
-       "    NumRequired = cms.int32(4),",
-       "    ParticleID = cms.vint32(321),",
-       "    PtMin = cms.vdouble(0.3),",
-       "    Status = cms.vint32(0)",
-       ")",
-       " ",
-       " ",
-       "process.ProductionFilterSequence = cms.Sequence(process.generator+process.BFilter+process.BsDecayFilter+process.PhiDecayFilter+process.TriggerMuonFilter)",
-       ]
-
-    fragment = '\n'.join(fragment)
-    fragment = fragment.format(
-          com = '13000.0' if self.year == 2018 else '13600.0',
-          gt = self.driver.global_tag,
-          bs = self.driver.beamspot_conditions,
-          era = self.driver.era,
-          nevents = self.nevents_perjob,
-          step = 'GEN-SIM' if not self.dogenonly else 'GEN',
-        )
-
-    part3 = [ 
-       " ",
-       " ",
-       "process.generation_step = cms.Path(process.pgen)",
-       "process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)",
-       "process.endjob_step = cms.EndPath(process.endOfProcess)",
-       "process.FEVTDEBUGoutput_step = cms.EndPath(process.FEVTDEBUGoutput)",
-       " ",
-       "process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.endjob_step,process.FEVTDEBUGoutput_step)",
-       "from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask",
-       "associatePatAlgosToolsTask(process)",
-       "for path in process.paths:",
-       "	getattr(process,path).insert(0, process.ProductionFilterSequence)",
-       " ",
-       "from Configuration.DataProcessing.Utils import addMonitoring",
-       " ",
-       "process = addMonitoring(process)",
-       " ",
-       "from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper; randSvc = RandomNumberServiceHelper(process.RandomNumberGeneratorService); randSvc.populate()",
-       "from Configuration.StandardSequences.earlyDeleteSettings_cff import customiseEarlyDelete",
-       "process = customiseEarlyDelete(process)",
-       " ",
-       ]
-
-    part3 = '\n'.join(part3)
+    step1_template_name = './cmsDrivers/step_GEN_{}.py'.format(self.year)
+    step1_template = open(step1_template_name, 'r')
+    lines = step1_template.readlines()
 
     step1_file = open('./production/{pl}/step1.py'.format(pl=self.pl), 'w+')
-    step1_file.write(part1)
-    step1_file.write('\n')
-    #with open('../fragments/{}'.format(self.fragment_name), 'r') as fragment:
-    #  for line in fragment:
-    #    step1_file.write(line)
-    step1_file.write(fragment)
-    step1_file.write(part3)
+
+    for line in lines:
+      if 'input = cms.untracked.int32(-1)' not in line:
+        step1_file.write(line)
+      else:
+        step1_file.write('    input = cms.untracked.int32({}),\n'.format(self.nevents_perjob))
+
     step1_file.close()
+    print('--> ./production/{pl}/step1.py created'.format(pl=self.pl))
 
 
   def submit(self):
@@ -611,8 +382,10 @@ class CRABLauncher(object):
     self.createSubmitter()
 
     print('\n -> Creating cmsDrivers')
-    #self.createDriver()
-    self.createStep1()
+    if not self.dogenonly:
+      self.createDriver()
+    else:
+      self.createStep1()
 
     if self.dosubmit or self.doresubmit:
       print('\n --> Submitting...')
