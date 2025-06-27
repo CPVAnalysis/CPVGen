@@ -52,10 +52,10 @@ generator = cms.EDFilter(
                 'ChargeConj MyPhi MyPhi',
                 '',
                 'Decay MyB_s0',
-                '1.000       MyPhi      MyPhi    PVV_CPLH 0.02 1 Hp pHp Hz pHz Hm pHm;', # info on decay model: https://evtgen.hepforge.org/doc/models.html
+                '1.000       MyPhi      MyPhi    PVV_CPLH 0.0 1 Hp pHp Hz pHz Hm pHm;', # info on decay model: https://evtgen.hepforge.org/doc/models.html
                 'Enddecay',
                 'Decay Myanti-B_s0',
-                '1.000       MyPhi      MyPhi    PVV_CPLH 0.02 1 Hp pHp Hz pHz Hm pHm;',
+                '1.000       MyPhi      MyPhi    PVV_CPLH 0.0 1 Hp pHp Hz pHz Hm pHm;',
                 'Enddecay',
                 'Decay MyPhi',
                  '1.000      K+         K-       VSS;', # decay of a vector particle into two scalar particles
