@@ -46,7 +46,7 @@ class CRABLauncher(object):
     #acc = 0.54 
 
     # acceptance of kaons (pt > 0.5 GeV |eta| < 2.5) otained with test_fragment_v2
-    acc = 0.97 
+    acc = 0.86 #0.97 
 
     self.eff_filter = eff * acc
     self.eff_nanoaod = 0.3 #FIXME too low?
