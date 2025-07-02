@@ -95,7 +95,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '140X_mcRun3_2024_realistic_v26
 process.TriggerMuonFilter = cms.EDFilter("PythiaFilter",
     MaxEta = cms.untracked.double(1.55),
     MinEta = cms.untracked.double(-1.55),
-    MinPt = cms.untracked.double(6.8),
+    MinPt = cms.untracked.double(5.8),
     ParticleID = cms.untracked.int32(13)
 )
 
@@ -156,10 +156,10 @@ process.generator = cms.EDFilter("Pythia8GeneratorFilter",
                 'ChargeConj MyPhi MyPhi',
                 '',
                 'Decay MyB_s0',
-                '1.000       MyPhi      MyPhi    PVV_CPLH 0.02 1 Hp pHp Hz pHz Hm pHm;',
+                '1.000       MyPhi      MyPhi    PVV_CPLH 0.0 1 Hp pHp Hz pHz Hm pHm;',
                 'Enddecay',
                 'Decay Myanti-B_s0',
-                '1.000       MyPhi      MyPhi    PVV_CPLH 0.02 1 Hp pHp Hz pHz Hm pHm;',
+                '1.000       MyPhi      MyPhi    PVV_CPLH 0.0 1 Hp pHp Hz pHz Hm pHm;',
                 'Enddecay',
                 'Decay MyPhi',
                 '1.000      K+         K-       VSS;',
